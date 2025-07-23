@@ -1,0 +1,19 @@
+{
+  "name": "CodeBattle - Gamified LeetCode Tracker",
+  "short_name": "CodeBattle",
+  "description": "A competitive platform where developers form teams and compete through daily LeetCode challenges",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#D9D9D9",
+  "theme_color": "#FF0000",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/vite.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ],
+  "categories": ["productivity", "education", "developer"]
+}

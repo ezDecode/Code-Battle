@@ -1,0 +1,201 @@
+@import "tailwindcss";
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+::-webkit-scrollbar {
+  display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+html {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+/* Smooth scrolling fallback */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Import Outreque Local Fonts */
+@font-face {
+  font-family: 'Outreque';
+  src: url('./assets/fonts/OutrequeRegular.ttf') format('truetype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Outreque';
+  src: url('./assets/fonts/OutrequeMedium.ttf') format('truetype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Outreque';
+  src: url('./assets/fonts/OutrequeBold.ttf') format('truetype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Outreque';
+  src: url('./assets/fonts/OutrequeBlack.ttf') format('truetype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* CodeBattle Professional Design System - Color Palette */
+:root {
+  /* Primary Color Palette - Systematic Usage */
+
+  /* Cosmic Midnight (40% usage) - Primary backgrounds */
+  --color-cosmic-midnight: #1a1625;
+  --color-cosmic-midnight-light: #2d2438;
+  --color-cosmic-midnight-dark: #0f0d14;
+
+  /* Neural Teal (25% usage) - Structural elements */
+  --color-neural-teal: #00b4a6;
+  --color-neural-teal-light: #1ac7b8;
+  --color-neural-teal-dark: #008a7f;
+
+  /* Focus Amber (20% usage) - Interactive elements */
+  --color-focus-amber: #ffb347;
+  --color-focus-amber-light: #ffc266;
+  --color-focus-amber-dark: #e6a040;
+
+  /* Engagement Coral (15% usage) - CTAs */
+  --color-engagement-coral: #ff6b6b;
+  --color-engagement-coral-light: #ff8585;
+  --color-engagement-coral-dark: #e65555;
+
+  /* Accessibility Colors */
+  --color-text-primary: #000000;
+  --color-text-light: #ffffff;
+
+  /* Surface Colors */
+  --color-surface-primary: var(--color-cosmic-midnight);
+  --color-surface-secondary: #ffffff;
+
+  /* Typography System */
+  --font-family-primary: 'Outreque', 'Inter', system-ui, sans-serif;
+
+  /* Typography Scale - Increased by 30% */
+  --font-size-h1: 62px;
+  --line-height-h1: 73px;
+  --font-weight-h1: 700;
+
+  --font-size-h2: 47px;
+  --line-height-h2: 57px;
+  --font-weight-h2: 700;
+
+  --font-size-h3: 31px;
+  --line-height-h3: 42px;
+  --font-weight-h3: 600;
+
+  --font-size-body-lg: 18px;
+  --line-height-body-lg: 28px;
+  --font-weight-body-lg: 400;
+
+  --font-size-body-sm: 14px;
+  --line-height-body-sm: 20px;
+  --font-weight-body-sm: 400;
+
+  /* Easings */
+  --easing-card: cubic-bezier(0.23, 1, 0.32, 1);
+  --easing-button: cubic-bezier(0.45, 0, 0.55, 1);
+}
+
+/* Base Styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  font-family: 'Outreque', system-ui, sans-serif;
+}
+
+body {
+  font-family: 'Outreque', system-ui, sans-serif;
+  background-color: var(--color-surface-secondary);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-body-lg);
+  line-height: var(--line-height-body-lg);
+  font-weight: var(--font-weight-body-lg);
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  overflow-x: hidden;
+  transition: background-color 0.3s var(--easing-card), color 0.3s var(--easing-card);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Outreque', system-ui, sans-serif;
+  margin: 0;
+  font-weight: var(--font-weight-h1);
+  line-height: 1.2;
+  color: var(--color-text-primary);
+  letter-spacing: -0.02em;
+}
+
+h1 {
+  font-size: var(--font-size-h1);
+  line-height: var(--line-height-h1);
+  font-weight: var(--font-weight-h1);
+}
+
+h2 {
+  font-size: var(--font-size-h2);
+  line-height: var(--line-height-h2);
+  font-weight: var(--font-weight-h2);
+}
+
+h3 {
+  font-size: var(--font-size-h3);
+  line-height: var(--line-height-h3);
+  font-weight: var(--font-weight-h3);
+}
+
+p {
+  margin: 0 0 1rem 0;
+  font-size: var(--font-size-body-lg);
+  line-height: var(--line-height-body-lg);
+  font-weight: var(--font-weight-body-lg);
+  color: var(--color-text-primary);
+}
+
+strong {
+  font-weight: 600;
+}
+
+.text-sm {
+  font-size: var(--font-size-body-sm);
+  line-height: var(--line-height-body-sm);
+  font-weight: var(--font-weight-body-sm);
+  color: var(--color-text-primary);
+}
+
+/* Accessibility and Focus States - WCAG AA Compliant */
+button:focus-visible,
+input:focus-visible,
+a:focus-visible {
+  outline: 2px solid var(--color-focus-amber);
+  outline-offset: 2px;
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
