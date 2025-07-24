@@ -275,6 +275,51 @@ class ApiService {
     }
   };
 
+  // User Profile API
+  user = {
+    updateProfile: async (profileData) => {
+      const formData = new FormData();
+      
+      // Add text fields
+      Object.keys(profileData).forEach(key => {
+        if (key !== 'avatar') {
+          formData.append(key, profileData[key]);
+        }
+      });
+      
+      // Handle avatar upload
+      if (profileData.avatar && profileData.avatar instanceof File) {
+        formData.append('avatar', profileData.avatar);
+      }
+      
+      const response = await this.request('/user/profile', {
+        method: 'PUT',
+        body: formData,
+        headers: {
+          // Remove Content-Type to let browser set it with boundary for FormData
+        }
+      });
+      
+      return response.user;
+    },
+
+    deleteAccount: async () => {
+      await this.request('/user/account', {
+        method: 'DELETE'
+      });
+      this.removeToken();
+    },
+
+    changePassword: async (currentPassword, newPassword) => {
+      const response = await this.request('/user/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+      
+      return response;
+    }
+  };
+
   // Dashboard API
   dashboard = {
     getData: async () => {

@@ -16,32 +16,15 @@ export const LeetCodeSync = () => {
     setSyncStatus('syncing');
     setSyncData(null);
     
-    const syncPromise = new Promise((resolve, reject) => {
-      setTimeout(() => {
-        if (Math.random() > 0.15) { // 85% success rate
-          const mockSyncData = {
-            problemsSynced: 3,
-            newStreak: (user?.currentStreak || 0) + 1,
-            pointsEarned: 150,
-            newProblems: [
-              { title: "Two Sum", difficulty: "Easy", points: 50 },
-              { title: "Add Two Numbers", difficulty: "Medium", points: 75 },
-              { title: "Longest Substring Without Repeating Characters", difficulty: "Medium", points: 75 }
-            ]
-          };
-          resolve(mockSyncData);
-        } else {
-          reject(new Error('Sync failed'));
-        }
-      }, 3000);
-    });
-    
     try {
-      const result = await toast.promise(syncPromise, {
-        loading: 'Syncing with LeetCode... This may take a moment.',
-        success: `Successfully synced ${3} problems! Earned ${150} points and extended streak.`,
-        error: 'Failed to sync with LeetCode. Please check your connection and try again.'
-      });
+      const result = await toast.promise(
+        actions.syncLeetCode ? actions.syncLeetCode() : Promise.reject(new Error('Sync service not available')),
+        {
+          loading: 'Syncing with LeetCode... This may take a moment.',
+          success: 'Successfully synced with LeetCode!',
+          error: 'Failed to sync with LeetCode. Please check your connection and try again.'
+        }
+      );
       
       setSyncStatus('success');
       setSyncData(result);
@@ -50,11 +33,6 @@ export const LeetCodeSync = () => {
       setTimeout(() => {
         actions.toggleModal('leetcodeSync', false);
       }, 1000);
-      
-      // Update the app state if needed
-      if (actions.syncLeetCode) {
-        actions.syncLeetCode();
-      }
       
     } catch (error) {
       setSyncStatus('error');

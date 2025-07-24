@@ -32,73 +32,45 @@ export function TeamDetailsModal() {
     actions.toggleModal('teamDetails', false);
   };
 
-  // Mock team data - this would come from the backend
-  const teamData = {
-    id: "1",
-    name: "Code Warriors",
-    description: "A team of passionate developers working together to solve challenging problems",
-    totalScore: 2450,
-    rank: 3,
-    membersCount: 5,
-    createdAt: "2024-01-15",
-    weeklyProgress: 85,
-    monthlyGoal: 3000,
-    averageRating: 1680,
-    problemsSolved: 147,
-    totalSubmissions: 234,
-    successRate: 62.8
-  };
+  // Get real team data from context
+  const { team } = state;
+  const teamData = team || null;
+  const members = teamMembers || [];
 
-  const members = teamMembers || [
-    {
-      id: "1",
-      name: "Alex Johnson",
-      leetcodeUsername: "alexj_codes",
-      role: "Leader",
-      score: 650,
-      problemsSolved: 45,
-      streak: 12,
-      avatar: null,
-      isOnline: true,
-      lastActive: "2 hours ago"
-    },
-    {
-      id: "2", 
-      name: "Sarah Chen",
-      leetcodeUsername: "sarah_dev",
-      role: "Member",
-      score: 580,
-      problemsSolved: 38,
-      streak: 8,
-      avatar: null,
-      isOnline: false,
-      lastActive: "1 day ago"
-    },
-    {
-      id: "3",
-      name: "Mike Rodriguez", 
-      leetcodeUsername: "mike_codes",
-      role: "Member",
-      score: 520,
-      problemsSolved: 34,
-      streak: 5,
-      avatar: null,
-      isOnline: true,
-      lastActive: "30 minutes ago"
-    },
-    {
-      id: "4",
-      name: "Emma Wilson",
-      leetcodeUsername: "emma_dev",
-      role: "Member", 
-      score: 480,
-      problemsSolved: 30,
-      streak: 3,
-      avatar: null,
-      isOnline: false,
-      lastActive: "3 hours ago"
-    }
-  ];
+  // Show message if no team data
+  if (!teamData) {
+    return (
+      <AnimatePresence>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+          onClick={closeModal}
+        >
+          <motion.div
+            initial={{ scale: 0.95, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.95, opacity: 0 }}
+            className="w-full max-w-md bg-white rounded-2xl shadow-2xl p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center">
+              <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">No Team Found</h3>
+              <p className="text-gray-600 mb-4">You're not currently part of a team. Join or create a team to start collaborating!</p>
+              <button
+                onClick={closeModal}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              >
+                Close
+              </button>
+            </div>
+          </motion.div>
+        </motion.div>
+      </AnimatePresence>
+    );
+  }
 
   const getRoleIcon = (role) => {
     switch (role) {
@@ -137,20 +109,20 @@ export function TeamDetailsModal() {
                   <Users className="h-8 w-8" />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-bold">{teamData.name}</h2>
-                  <p className="text-blue-100 mt-1">{teamData.description}</p>
+                  <h2 className="text-2xl font-bold">{teamData?.name || 'Team'}</h2>
+                  <p className="text-blue-100 mt-1">{teamData?.description || 'Team description'}</p>
                   <div className="flex items-center space-x-4 mt-2 text-sm">
                     <span className="flex items-center space-x-1">
                       <Trophy className="h-4 w-4" />
-                      <span>Rank #{teamData.rank}</span>
+                      <span>Rank #{teamData?.rank || 'Unranked'}</span>
                     </span>
                     <span className="flex items-center space-x-1">
                       <Users className="h-4 w-4" />
-                      <span>{teamData.membersCount} members</span>
+                      <span>{teamData?.members?.length || teamData?.membersCount || 0} members</span>
                     </span>
                     <span className="flex items-center space-x-1">
                       <Star className="h-4 w-4" />
-                      <span>{teamData.totalScore} points</span>
+                      <span>{teamData?.totalScore || 0} points</span>
                     </span>
                   </div>
                 </div>
@@ -198,7 +170,7 @@ export function TeamDetailsModal() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-blue-600 font-medium">Total Score</p>
-                        <p className="text-2xl font-bold text-blue-900">{teamData.totalScore}</p>
+                        <p className="text-2xl font-bold text-blue-900">{teamData?.totalScore || 0}</p>
                       </div>
                       <Trophy className="h-8 w-8 text-blue-600" />
                     </div>
@@ -208,7 +180,7 @@ export function TeamDetailsModal() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-green-600 font-medium">Problems Solved</p>
-                        <p className="text-2xl font-bold text-green-900">{teamData.problemsSolved}</p>
+                        <p className="text-2xl font-bold text-green-900">{teamData?.problemsSolved || 0}</p>
                       </div>
                       <CheckCircle className="h-8 w-8 text-green-600" />
                     </div>
@@ -218,7 +190,7 @@ export function TeamDetailsModal() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="text-sm text-purple-600 font-medium">Success Rate</p>
-                        <p className="text-2xl font-bold text-purple-900">{teamData.successRate}%</p>
+                        <p className="text-2xl font-bold text-purple-900">{teamData?.successRate || 0}%</p>
                       </div>
                       <Award className="h-8 w-8 text-purple-600" />
                     </div>
@@ -229,16 +201,16 @@ export function TeamDetailsModal() {
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <div className="flex items-center justify-between mb-3">
                     <h3 className="font-semibold text-gray-900">Weekly Progress</h3>
-                    <span className="text-sm text-gray-600">{teamData.weeklyProgress}% of goal</span>
+                    <span className="text-sm text-gray-600">{teamData?.weeklyProgress || 0}% of goal</span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-3">
                     <div 
                       className="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-300"
-                      style={{ width: `${teamData.weeklyProgress}%` }}
+                      style={{ width: `${teamData?.weeklyProgress || 0}%` }}
                     ></div>
                   </div>
                   <p className="text-sm text-gray-600 mt-2">
-                    {teamData.totalScore} / {teamData.monthlyGoal} points this month
+                    {teamData?.totalScore || 0} / {teamData?.monthlyGoal || 0} points this month
                   </p>
                 </div>
 
@@ -246,27 +218,22 @@ export function TeamDetailsModal() {
                 <div>
                   <h3 className="font-semibold text-gray-900 mb-3">Recent Activity</h3>
                   <div className="space-y-3">
-                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Alex solved "Two Sum" problem</p>
-                        <p className="text-xs text-gray-500">2 hours ago</p>
+                    {teamData?.recentActivity?.length > 0 ? (
+                      teamData.recentActivity.map((activity, index) => (
+                        <div key={index} className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                          <CheckCircle className="h-5 w-5 text-green-500" />
+                          <div className="flex-1">
+                            <p className="text-sm font-medium">{activity.message}</p>
+                            <p className="text-xs text-gray-500">{activity.time}</p>
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-center py-4 text-gray-500">
+                        <p className="text-sm">No recent activity</p>
+                        <p className="text-xs mt-1">Team activity will appear here</p>
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <Star className="h-5 w-5 text-yellow-500" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Team reached 2400+ points milestone</p>
-                        <p className="text-xs text-gray-500">5 hours ago</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
-                      <UserPlus className="h-5 w-5 text-blue-500" />
-                      <div className="flex-1">
-                        <p className="text-sm font-medium">Emma joined the team</p>
-                        <p className="text-xs text-gray-500">1 day ago</p>
-                      </div>
-                    </div>
+                    )}
                   </div>
                 </div>
               </div>
@@ -283,45 +250,53 @@ export function TeamDetailsModal() {
                 </div>
                 
                 <div className="grid gap-4">
-                  {members.map((member) => (
-                    <div key={member.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
-                      <div className="flex items-center space-x-4">
-                        <div className="relative">
-                          <div className="h-12 w-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
-                            {getInitials(member.name)}
+                  {members.length > 0 ? (
+                    members.map((member) => (
+                      <div key={member.id || member._id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                        <div className="flex items-center space-x-4">
+                          <div className="relative">
+                            <div className="h-12 w-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-white font-bold">
+                              {getInitials(member.name || member.displayName || 'U')}
+                            </div>
+                            {member.isOnline && (
+                              <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-green-500 border-2 border-white rounded-full"></div>
+                            )}
                           </div>
-                          {member.isOnline && (
-                            <div className="absolute -bottom-1 -right-1 h-4 w-4 bg-green-500 border-2 border-white rounded-full"></div>
-                          )}
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-2">
+                              <h4 className="font-medium text-gray-900">{member.name || member.displayName || 'Team Member'}</h4>
+                              {getRoleIcon(member.role || 'Member')}
+                              <span className="text-sm text-gray-500">{member.role || 'Member'}</span>
+                            </div>
+                            <p className="text-sm text-gray-600">@{member.leetcodeUsername || 'username'}</p>
+                            <p className="text-xs text-gray-500">Last active: {member.lastActive || 'Unknown'}</p>
+                          </div>
                         </div>
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2">
-                            <h4 className="font-medium text-gray-900">{member.name}</h4>
-                            {getRoleIcon(member.role)}
-                            <span className="text-sm text-gray-500">{member.role}</span>
+                        <div className="text-right">
+                          <div className="flex items-center space-x-4 text-sm">
+                            <div className="text-center">
+                              <p className="font-bold text-gray-900">{member.score || member.totalScore || 0}</p>
+                              <p className="text-gray-500">Points</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="font-bold text-gray-900">{member.problemsSolved || 0}</p>
+                              <p className="text-gray-500">Solved</p>
+                            </div>
+                            <div className="text-center">
+                              <p className="font-bold text-gray-900">{member.streak || 0}</p>
+                              <p className="text-gray-500">Streak</p>
+                            </div>
                           </div>
-                          <p className="text-sm text-gray-600">@{member.leetcodeUsername}</p>
-                          <p className="text-xs text-gray-500">Last active: {member.lastActive}</p>
                         </div>
                       </div>
-                      <div className="text-right">
-                        <div className="flex items-center space-x-4 text-sm">
-                          <div className="text-center">
-                            <p className="font-bold text-gray-900">{member.score}</p>
-                            <p className="text-gray-500">Points</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold text-gray-900">{member.problemsSolved}</p>
-                            <p className="text-gray-500">Solved</p>
-                          </div>
-                          <div className="text-center">
-                            <p className="font-bold text-gray-900">{member.streak}</p>
-                            <p className="text-gray-500">Streak</p>
-                          </div>
-                        </div>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Users className="h-12 w-12 mx-auto mb-2 text-gray-300" />
+                      <p>No team members found</p>
+                      <p className="text-sm mt-1">Invite members to start collaborating</p>
                     </div>
-                  ))}
+                  )}
                 </div>
               </div>
             )}
@@ -332,22 +307,22 @@ export function TeamDetailsModal() {
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="bg-gray-50 p-4 rounded-lg text-center">
                     <Trophy className="h-8 w-8 text-yellow-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-gray-900">#{teamData.rank}</p>
+                    <p className="text-2xl font-bold text-gray-900">#{teamData?.rank || 'Unranked'}</p>
                     <p className="text-sm text-gray-600">Global Rank</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg text-center">
                     <Code className="h-8 w-8 text-blue-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-gray-900">{teamData.problemsSolved}</p>
+                    <p className="text-2xl font-bold text-gray-900">{teamData?.problemsSolved || 0}</p>
                     <p className="text-sm text-gray-600">Problems</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg text-center">
                     <Target className="h-8 w-8 text-green-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-gray-900">{teamData.successRate}%</p>
+                    <p className="text-2xl font-bold text-gray-900">{teamData?.successRate || 0}%</p>
                     <p className="text-sm text-gray-600">Success Rate</p>
                   </div>
                   <div className="bg-gray-50 p-4 rounded-lg text-center">
                     <Star className="h-8 w-8 text-purple-500 mx-auto mb-2" />
-                    <p className="text-2xl font-bold text-gray-900">{teamData.averageRating}</p>
+                    <p className="text-2xl font-bold text-gray-900">{teamData?.averageRating || 0}</p>
                     <p className="text-sm text-gray-600">Avg Rating</p>
                   </div>
                 </div>
@@ -357,18 +332,18 @@ export function TeamDetailsModal() {
                   <h3 className="font-semibold text-gray-900 mb-4">Monthly Goal Progress</h3>
                   <div className="mb-4">
                     <div className="flex justify-between text-sm mb-2">
-                      <span>Current: {teamData.totalScore} points</span>
-                      <span>Goal: {teamData.monthlyGoal} points</span>
+                      <span>Current: {teamData?.totalScore || 0} points</span>
+                      <span>Goal: {teamData?.monthlyGoal || 0} points</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-4">
                       <div 
                         className="bg-gradient-to-r from-blue-500 to-purple-500 h-4 rounded-full transition-all duration-300"
-                        style={{ width: `${(teamData.totalScore / teamData.monthlyGoal) * 100}%` }}
+                        style={{ width: `${teamData?.monthlyGoal > 0 ? (teamData?.totalScore || 0) / teamData.monthlyGoal * 100 : 0}%` }}
                       ></div>
                     </div>
                   </div>
                   <p className="text-sm text-gray-600">
-                    {teamData.monthlyGoal - teamData.totalScore} points remaining to reach monthly goal
+                    {Math.max(0, (teamData?.monthlyGoal || 0) - (teamData?.totalScore || 0))} points remaining to reach monthly goal
                   </p>
                 </div>
 
@@ -381,11 +356,11 @@ export function TeamDetailsModal() {
                   <div className="grid grid-cols-2 gap-4 text-sm">
                     <div>
                       <p className="text-gray-600">Created</p>
-                      <p className="font-medium">{new Date(teamData.createdAt).toLocaleDateString()}</p>
+                      <p className="font-medium">{teamData?.createdAt ? new Date(teamData.createdAt).toLocaleDateString() : 'Unknown'}</p>
                     </div>
                     <div>
                       <p className="text-gray-600">Total Submissions</p>
-                      <p className="font-medium">{teamData.totalSubmissions}</p>
+                      <p className="font-medium">{teamData?.totalSubmissions || 0}</p>
                     </div>
                   </div>
                 </div>
@@ -397,7 +372,7 @@ export function TeamDetailsModal() {
           <div className="border-t border-gray-200 p-4 bg-gray-50">
             <div className="flex justify-between items-center">
               <p className="text-sm text-gray-600">
-                Team created on {new Date(teamData.createdAt).toLocaleDateString()}
+                Team created on {teamData?.createdAt ? new Date(teamData.createdAt).toLocaleDateString() : 'Unknown date'}
               </p>
               <div className="flex space-x-3">
                 <button className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors">

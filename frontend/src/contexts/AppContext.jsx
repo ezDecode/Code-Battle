@@ -44,6 +44,7 @@ export const ActionTypes = {
   LOGIN_SUCCESS: 'LOGIN_SUCCESS',
   LOGIN_FAILURE: 'LOGIN_FAILURE',
   LOGOUT: 'LOGOUT',
+  UPDATE_USER: 'UPDATE_USER',
   SET_OAUTH_PENDING: 'SET_OAUTH_PENDING',
   
   // Data actions
@@ -98,6 +99,15 @@ const appReducer = (state, action) => {
     case ActionTypes.LOGOUT:
       return {
         ...initialState
+      };
+      
+    case ActionTypes.UPDATE_USER:
+      return {
+        ...state,
+        user: {
+          ...state.user,
+          ...action.payload
+        }
       };
       
     case ActionTypes.SET_OAUTH_PENDING:
@@ -330,6 +340,10 @@ export const AppProvider = ({ children }) => {
         message: 'You have been logged out.',
         duration: 3000
       });
+    },
+
+    updateUser: (userData) => {
+      dispatch({ type: ActionTypes.UPDATE_USER, payload: userData });
     },
 
     // OAuth actions

@@ -5,28 +5,20 @@ export default {
     "./src/**/*.{js,ts,jsx,tsx}",
   ],
   safelist: [
-    // CodeBattle Professional Design System classes
-    'bg-cosmic-midnight',
-    'bg-neural-teal',
-    'bg-focus-amber',
-    'bg-engagement-coral',
-    'text-cosmic-midnight',
-    'text-neural-teal',
-    'text-focus-amber',
-    'text-engagement-coral',
-    'text-light',
-    'text-muted',
-    'border-cosmic-midnight',
-    'border-neural-teal',
-    'border-focus-amber',
-    'border-engagement-coral',
+    // CodeBattle Simplified Design System classes
+    'bg-primary-gray',
+    'bg-primary-red', 
+    'text-primary-gray',
+    'text-primary-red',
+    'text-black',
+    'text-white',
+    'border-primary-gray',
+    'border-primary-red',
     'shadow-card',
     'shadow-modal',
     'shadow-hover',
     // Animation classes
     'animate-glow-pulse',
-    'animate-glow-pulse-teal',
-    'animate-glow-pulse-amber',
     'animate-float',
     'fade-in',
     'slide-up',
@@ -34,50 +26,36 @@ export default {
   theme: {
     extend: {
       colors: {
-        // CodeBattle Professional Design System - Systematic Color Usage
+        // CodeBattle Primary Design System - Matching LandingPage
 
-        // Cosmic Midnight (40% usage) - Primary backgrounds
-        'cosmic-midnight': {
-          DEFAULT: '#1a1625',
-          light: '#2d2438',
-          dark: '#0f0d14',
+        // Primary Gray (Background) - Light gray from LandingPage
+        'primary-gray': {
+          DEFAULT: '#D9D9D9',
+          light: '#E5E5E5',
+          dark: '#CCCCCC',
         },
 
-        // Neural Teal (25% usage) - Structural elements
-        'neural-teal': {
-          DEFAULT: '#00b4a6',
-          light: '#1ac7b8',
-          dark: '#008a7f',
+        // Primary Red (Accent) - Bright red from LandingPage  
+        'primary-red': {
+          DEFAULT: '#FF0000',
+          light: '#FF3333',
+          dark: '#CC0000',
         },
 
-        // Focus Amber (20% usage) - Interactive elements
-        'focus-amber': {
-          DEFAULT: '#ffb347',
-          light: '#ffc266',
-          dark: '#e6a040',
-        },
-
-        // Engagement Coral (15% usage) - CTAs
-        'engagement-coral': {
-          DEFAULT: '#ff6b6b',
-          light: '#ff8585',
-          dark: '#e65555',
-        },
-
-        // Accessibility Colors
+        // Text Colors - Simple black and white system
         'text': {
           primary: '#000000',
-          secondary: '#333333',
+          secondary: '#000000', 
           light: '#ffffff',
-          muted: '#666666',
+          muted: '#000000',
         },
 
-        // Surface Colors
+        // Surface Colors - Simplified
         'surface': {
-          primary: '#1a1625',
+          primary: '#D9D9D9',
           secondary: '#ffffff',
-          accent: '#f8f9fa',
-          overlay: 'rgba(26, 22, 37, 0.9)',
+          accent: '#D9D9D9',
+          overlay: 'rgba(217, 217, 217, 0.9)',
         },
 
         // Utility Colors
@@ -85,19 +63,19 @@ export default {
         'white': '#ffffff',
         'transparent': 'transparent',
 
-        // shadcn/ui colors
-        border: "hsl(var(--border))",
-        input: "hsl(var(--input))",
-        ring: "hsl(var(--ring))",
-        background: "hsl(var(--background))",
-        foreground: "hsl(var(--foreground))",
+        // shadcn/ui colors - Updated to match theme
+        border: "#CCCCCC",
+        input: "#D9D9D9", 
+        ring: "#FF0000",
+        background: "#D9D9D9",
+        foreground: "#000000",
         primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
+          DEFAULT: "#FF0000",
+          foreground: "#ffffff",
         },
         secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
+          DEFAULT: "#D9D9D9",
+          foreground: "#000000",
         },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",

@@ -214,7 +214,7 @@ const ToastIcon = ({ type }) => {
     case TOAST_TYPES.SUCCESS:
       return <CheckCircle {...iconProps} className="w-5 h-5 text-green-600" />;
     case TOAST_TYPES.ERROR:
-      return <AlertCircle {...iconProps} className="w-5 h-5 text-red-600" />;
+      return <AlertCircle {...iconProps} className="w-5 h-5 text-[#FF0000]" />;
     case TOAST_TYPES.WARNING:
       return <AlertTriangle {...iconProps} className="w-5 h-5 text-yellow-600" />;
     case TOAST_TYPES.LOADING:
@@ -227,20 +227,20 @@ const ToastIcon = ({ type }) => {
 
 // Toast styling
 const getToastStyles = (type) => {
-  const baseStyles = "border-l-4 bg-white shadow-lg backdrop-blur-sm";
+  const baseStyles = "border-l-4 shadow-lg backdrop-blur-sm";
   
   switch (type) {
     case TOAST_TYPES.SUCCESS:
-      return `${baseStyles} border-green-500 bg-green-50/90`;
+      return `${baseStyles} border-green-500 bg-[#D9D9D9]/90`;
     case TOAST_TYPES.ERROR:
-      return `${baseStyles} border-red-500 bg-red-50/90`;
+      return `${baseStyles} border-[#FF0000] bg-[#D9D9D9]/90`;
     case TOAST_TYPES.WARNING:
-      return `${baseStyles} border-yellow-500 bg-yellow-50/90`;
+      return `${baseStyles} border-yellow-500 bg-[#D9D9D9]/90`;
     case TOAST_TYPES.LOADING:
-      return `${baseStyles} border-blue-500 bg-blue-50/90`;
+      return `${baseStyles} border-blue-500 bg-[#D9D9D9]/90`;
     case TOAST_TYPES.INFO:
     default:
-      return `${baseStyles} border-blue-500 bg-blue-50/90`;
+      return `${baseStyles} border-blue-500 bg-[#D9D9D9]/90`;
   }
 };
 
@@ -273,14 +273,14 @@ const Toast = ({ toast, onRemove }) => {
         <div className="flex-1 min-w-0">
           {title && (
             <h4 
-              className="font-bold text-gray-900 mb-1 text-sm"
+              className="font-bold text-black mb-1 text-sm"
               style={{ fontFamily: 'Outreque, sans-serif' }}
             >
               {title}
             </h4>
           )}
           <p 
-            className="text-gray-800 text-sm leading-relaxed break-words"
+            className="text-black text-sm leading-relaxed break-words"
             style={{ fontFamily: 'Outreque, sans-serif' }}
           >
             {message}

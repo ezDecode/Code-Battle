@@ -3,7 +3,6 @@ import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavig
 import { AppProvider } from '@/contexts/AppContext';
 import { ToastProvider } from '@/components/ui/Toast';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { ConnectionStatus } from '@/components/ui/ConnectionStatus';
 import { useAuth } from '@/hooks/useAuth';
 import { withLazyLoading } from '@/lib/performance';
 import './index.css';
@@ -48,7 +47,6 @@ const PublicRoute = ({ children }) => {
 function AppContent() {
   return (
     <OAuthCallback>
-      <ConnectionStatus />
       <Routes>
         <Route 
           path="/" 
