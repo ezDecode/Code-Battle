@@ -16,6 +16,25 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Utility classes for dashboard */
+.line-clamp-3 {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Import Outreque Local Fonts */
 @font-face {
   font-family: 'Outreque';

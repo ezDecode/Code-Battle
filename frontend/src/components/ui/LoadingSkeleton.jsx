@@ -149,24 +149,6 @@ export const RecentActivitySkeleton = () => (
   </SkeletonCard>
 );
 
-export const LeetCodeSyncSkeleton = () => (
-  <SkeletonCard className="lg:col-span-1 bg-gradient-to-br from-teal-500 to-cyan-600">
-    <div className="flex items-center space-x-3 mb-4">
-      <SkeletonCircle size="w-8 h-8" />
-      <SkeletonText lines={1} width="1/2" />
-    </div>
-    
-    <div className="space-y-3">
-      <div className="flex items-center space-x-2">
-        <SkeletonCircle size="w-4 h-4" />
-        <SkeletonText lines={1} width="1/3" />
-      </div>
-      <SkeletonText lines={1} width="1/2" />
-      <SkeletonText lines={1} width="3/4" />
-    </div>
-  </SkeletonCard>
-);
-
 // Loading state component for entire dashboard
 export const DashboardLoadingSkeleton = () => (
   <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
@@ -190,7 +172,6 @@ export const DashboardLoadingSkeleton = () => (
         <LeaderboardCardSkeleton />
         <ChallengesCardSkeleton />
         <RecentActivitySkeleton />
-        <LeetCodeSyncSkeleton />
       </div>
     </div>
   </div>

@@ -35,6 +35,9 @@ export default {
           dark: '#CCCCCC',
         },
 
+        // Cream background for dashboard
+        'cream': '#F5F5DC',
+
         // Primary Red (Accent) - Bright red from LandingPage  
         'primary-red': {
           DEFAULT: '#FF0000',

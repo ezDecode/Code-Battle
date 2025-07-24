@@ -1,9 +1,9 @@
-import { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState, useEffect, useRef } from "react";
+import { AnimatePresence } from "framer-motion";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/components/ui/Toast";
 import { Avatar } from "@/components/ui/Avatar";
-import { Bell, LogOut, User, Menu, X, ChevronDown, Zap, RefreshCw } from "lucide-react";
+import { Bell, LogOut, User, Menu, X, ChevronDown, Zap, RefreshCw, Users } from "lucide-react";
 
 export function NavigationBar() {
   const { state, actions } = useApp();
@@ -11,7 +11,9 @@ export function NavigationBar() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAvatarDropdownOpen, setIsAvatarDropdownOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
   const toast = useToast();
+  const teamDropdownRef = useRef(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -19,6 +21,30 @@ export function NavigationBar() {
     actions.logout();
     setIsAvatarDropdownOpen(false);
   };
+
+  const handleCreateTeam = () => {
+    actions.toggleModal('teamCreation', true);
+    setTeamDropdownOpen(false);
+  };
+
+  const handleJoinTeam = () => {
+    actions.toggleModal('teamDetails', true);
+    setTeamDropdownOpen(false);
+  };
+
+  // Close team dropdown when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target)) {
+        setTeamDropdownOpen(false);
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   const handleSyncNow = async () => {
     setIsSyncing(true);
@@ -49,31 +75,60 @@ export function NavigationBar() {
   };
 
   return (
-    <motion.nav 
-      className="sticky top-0 z-40 w-full bg-[#D9D9D9]/80 backdrop-blur-lg border-b border-gray-400"
-      initial={{ y: -100 }}
-      animate={{ y: 0 }}
-      transition={{ duration: 0.3 }}
-    >
+    <nav className="sticky top-0 z-40 w-full">
       <div className="max-w-7xl mx-auto flex h-16 items-center justify-between px-4 sm:px-6 lg:px-8">
         {/* Logo */}
-        <motion.div 
-          className="flex items-center space-x-3"
-          whileHover={{ scale: 1.05 }}
-          transition={{ type: "spring", stiffness: 400, damping: 10 }}
-        >
+        <div className="flex items-center space-x-3">
           <div className="flex flex-col">
             <span className="text-xl font-bold text-black">CodeBattle</span>
             <span className="text-xs text-black -mt-1 hidden sm:block">Gamified Coding</span>
           </div>
-        </motion.div>
+        </div>
 
         {/* Desktop Navigation */}
-        <div className="hidden md:flex items-center space-x-4">
+        <div className="hidden md:flex items-center space-x-3">
+          {/* Team Dropdown */}
+          <div className="relative" ref={teamDropdownRef}>
+            <button
+              onClick={() => setTeamDropdownOpen(!teamDropdownOpen)}
+              className="px-4 py-2 bg-[#FF0000] text-white rounded-lg hover:bg-[#FF0000]/90 transition-colors font-medium text-sm flex items-center gap-2"
+            >
+              <Users className="h-4 w-4" />
+              Team
+              <ChevronDown className={`h-4 w-4 transition-transform ${teamDropdownOpen ? 'rotate-180' : ''}`} />
+            </button>
+            
+            {teamDropdownOpen && (
+              <div className="absolute left-0 top-full mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
+                <button
+                  onClick={handleCreateTeam}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors text-gray-700 flex items-center gap-2"
+                >
+                  <Users className="h-4 w-4" />
+                  Create Team
+                </button>
+                <button
+                  onClick={handleJoinTeam}
+                  className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors text-gray-700 flex items-center gap-2"
+                >
+                  <User className="h-4 w-4" />
+                  Join Team
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Sync Now Button */}
+          <button
+            onClick={handleSyncNow}
+            disabled={isSyncing || loading}
+            className="px-4 py-2 bg-[#FF0000] text-white rounded-lg hover:bg-[#FF0000]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium text-sm"
+          >
+            {isSyncing ? 'Syncing...' : 'Sync Now'}
+          </button>
+
           {/* Notifications */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
+          <button
             onClick={toggleNotifications}
             className="relative p-2 text-black hover:text-[#FF0000] hover:bg-black/10 rounded-xl transition-colors"
             title="Notifications"
@@ -84,66 +139,36 @@ export function NavigationBar() {
                 {unreadCount}
               </span>
             )}
-          </motion.button>
-
-          {/* Sync Now Button */}
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleSyncNow}
-            disabled={isSyncing || loading}
-            className="flex items-center space-x-2 px-3 py-2 bg-[#FF0000] text-white rounded-xl hover:bg-[#FF0000]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            title="Sync with LeetCode"
-          >
-            {isSyncing ? (
-              <RefreshCw className="h-4 w-4 animate-spin" />
-            ) : (
-              <Zap className="h-4 w-4" />
-            )}
-            <span className="hidden sm:inline">
-              {isSyncing ? 'Syncing...' : 'Sync Now'}
-            </span>
-          </motion.button>
+          </button>
 
           {/* User Profile with Dropdown */}
           <div className="relative">
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+            <button
               onMouseEnter={() => setIsAvatarDropdownOpen(true)}
               onMouseLeave={() => setIsAvatarDropdownOpen(false)}
               className="flex items-center space-x-2 p-2 rounded-xl hover:bg-black/10 transition-colors"
             >
               <div className="flex items-center space-x-3">
-                <div className="text-right hidden sm:block">
-                  <div className="text-sm font-medium text-black">{user?.name}</div>
-                  <div className="text-xs text-black">@{user?.leetcodeUsername}</div>
-                </div>
                 <Avatar user={user} size="md" />
                 <ChevronDown className="h-4 w-4 text-black" />
               </div>
-            </motion.button>
+            </button>
 
             {/* Avatar Dropdown */}
             <AnimatePresence>
               {isAvatarDropdownOpen && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10, scale: 0.95 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, y: -10, scale: 0.95 }}
-                  transition={{ duration: 0.2 }}
+                <div
                   onMouseEnter={() => setIsAvatarDropdownOpen(true)}
                   onMouseLeave={() => setIsAvatarDropdownOpen(false)}
-                  className="absolute right-0 top-full mt-2 w-64 bg-[#D9D9D9] rounded-xl shadow-lg border border-gray-400 py-2 z-50"
+                  className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
                 >
                   {/* User Info */}
-                  <div className="px-4 py-3 border-b border-gray-400">
+                  <div className="px-4 py-3 border-b border-gray-200">
                     <div className="flex items-center space-x-3">
                       <Avatar user={user} size="lg" />
                       <div>
-                        <div className="text-sm font-medium text-black">{user?.displayName || user?.name}</div>
-                        <div className="text-xs text-black">@{user?.leetcodeUsername || 'No LeetCode'}</div>
-                        <div className="text-xs text-[#FF0000] font-medium">
+                        <div className="text-lg font-semibold text-black">{user?.displayName || user?.name}</div>
+                        <div className="text-sm text-[#FF0000] font-medium">
                           {user?.totalScore || 0} points
                         </div>
                       </div>
@@ -157,10 +182,10 @@ export function NavigationBar() {
                         actions.toggleModal('profileSettings', true);
                         setIsAvatarDropdownOpen(false);
                       }}
-                      className="flex items-center space-x-3 w-full px-4 py-2 text-black hover:bg-black/10 transition-colors"
+                      className="flex items-center space-x-3 w-full px-4 py-2 text-black hover:bg-gray-50 transition-colors"
                     >
-                      <User className="h-4 w-4" />
-                      <span>Profile Settings</span>
+                      <User className="h-5 w-5" />
+                      <span className="text-base">Profile Settings</span>
                     </button>
 
                     <button
@@ -168,10 +193,10 @@ export function NavigationBar() {
                         toggleNotifications();
                         setIsAvatarDropdownOpen(false);
                       }}
-                      className="flex items-center space-x-3 w-full px-4 py-2 text-black hover:bg-black/10 transition-colors"
+                      className="flex items-center space-x-3 w-full px-4 py-2 text-black hover:bg-gray-50 transition-colors"
                     >
-                      <Bell className="h-4 w-4" />
-                      <span>Notifications</span>
+                      <Bell className="h-5 w-5" />
+                      <span className="text-base">Notifications</span>
                       {unreadCount > 0 && (
                         <span className="bg-[#FF0000] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                           {unreadCount}
@@ -181,56 +206,48 @@ export function NavigationBar() {
 
                     <button
                       onClick={handleQuickSync}
-                      className="flex items-center space-x-3 w-full px-4 py-2 text-[#FF0000] hover:bg-[#FF0000]/10 transition-colors"
+                      className="flex items-center space-x-3 w-full px-4 py-2 text-[#FF0000] hover:bg-red-50 transition-colors"
                     >
-                      <Zap className="h-4 w-4" />
-                      <span>Sync LeetCode</span>
+                      <Zap className="h-5 w-5" />
+                      <span className="text-base">Sync LeetCode</span>
                     </button>
 
-                    <div className="border-t border-gray-400 mt-2 pt-2">
+                    <div className="border-t border-gray-200 mt-2 pt-2">
                       <button
                         onClick={handleLogout}
-                        className="flex items-center space-x-3 w-full px-4 py-2 text-[#FF0000] hover:bg-[#FF0000]/10 transition-colors"
+                        className="flex items-center space-x-3 w-full px-4 py-2 text-[#FF0000] hover:bg-red-50 transition-colors"
                       >
-                        <LogOut className="h-4 w-4" />
-                        <span>Logout</span>
+                        <LogOut className="h-5 w-5" />
+                        <span className="text-base">Logout</span>
                       </button>
                     </div>
                   </div>
-                </motion.div>
+                </div>
               )}
             </AnimatePresence>
           </div>
         </div>
 
         {/* Mobile Menu Button */}
-        <motion.button
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
+        <button
           className="md:hidden p-2 text-black hover:text-[#FF0000] hover:bg-black/10 rounded-xl transition-colors"
           onClick={() => setIsMenuOpen(!isMenuOpen)}
         >
           {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
-        </motion.button>
+        </button>
       </div>
 
       {/* Mobile Menu */}
       <AnimatePresence>
         {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="md:hidden bg-[#D9D9D9] border-t border-gray-400"
-          >
+          <div className="md:hidden bg-white border-t border-gray-200">
             <div className="px-4 py-4 space-y-3">
               {/* User Info */}
-              <div className="flex items-center space-x-3 pb-3 border-b border-gray-400">
+              <div className="flex items-center space-x-3 pb-3 border-b border-gray-200">
                 <Avatar user={user} size="md" />
                 <div>
-                  <div className="text-sm font-medium text-black">{user?.name}</div>
-                  <div className="text-xs text-black">@{user?.leetcodeUsername}</div>
-                  <div className="text-xs text-[#FF0000] font-medium">
+                  <div className="text-base font-semibold text-black">{user?.name}</div>
+                  <div className="text-sm text-[#FF0000] font-medium">
                     {user?.totalScore || 0} points
                   </div>
                 </div>
@@ -239,13 +256,35 @@ export function NavigationBar() {
               {/* Menu Items */}
               <button
                 onClick={() => {
+                  handleCreateTeam();
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 w-full p-2 text-black hover:text-[#FF0000] hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                <Users className="h-5 w-5" />
+                <span className="text-base">Create Team</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  handleJoinTeam();
+                  setIsMenuOpen(false);
+                }}
+                className="flex items-center space-x-3 w-full p-2 text-black hover:text-[#FF0000] hover:bg-gray-50 rounded-xl transition-colors"
+              >
+                <User className="h-5 w-5" />
+                <span className="text-base">Join Team</span>
+              </button>
+
+              <button
+                onClick={() => {
                   toggleNotifications();
                   setIsMenuOpen(false);
                 }}
-                className="flex items-center space-x-3 w-full p-2 text-black hover:text-[#FF0000] hover:bg-black/10 rounded-xl transition-colors"
+                className="flex items-center space-x-3 w-full p-2 text-black hover:text-[#FF0000] hover:bg-gray-50 rounded-xl transition-colors"
               >
                 <Bell className="h-5 w-5" />
-                <span>Notifications</span>
+                <span className="text-base">Notifications</span>
                 {unreadCount > 0 && (
                   <span className="bg-[#FF0000] text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                     {unreadCount}
@@ -259,33 +298,33 @@ export function NavigationBar() {
                   setIsMenuOpen(false);
                 }}
                 disabled={isSyncing || loading}
-                className="flex items-center space-x-3 w-full p-2 text-[#FF0000] hover:text-[#FF0000] hover:bg-[#FF0000]/10 rounded-xl transition-colors disabled:opacity-50"
+                className="flex items-center space-x-3 w-full p-2 text-[#FF0000] hover:bg-red-50 rounded-xl transition-colors disabled:opacity-50"
               >
                 {isSyncing ? (
                   <RefreshCw className="h-5 w-5 animate-spin" />
                 ) : (
                   <Zap className="h-5 w-5" />
                 )}
-                <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
+                <span className="text-base">{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
               </button>
 
               {/* Logout - Separated */}
-              <div className="border-t border-gray-400 pt-3">
+              <div className="border-t border-gray-200 pt-3">
                 <button
                   onClick={() => {
                     handleLogout();
                     setIsMenuOpen(false);
                   }}
-                  className="flex items-center space-x-3 w-full p-2 text-[#FF0000] hover:text-[#FF0000] hover:bg-[#FF0000]/10 rounded-xl transition-colors"
+                  className="flex items-center space-x-3 w-full p-2 text-[#FF0000] hover:bg-red-50 rounded-xl transition-colors"
                 >
                   <LogOut className="h-5 w-5" />
-                  <span>Logout</span>
+                  <span className="text-base">Logout</span>
                 </button>
               </div>
             </div>
-          </motion.div>
+          </div>
         )}
       </AnimatePresence>
-    </motion.nav>
+    </nav>
   );
 }

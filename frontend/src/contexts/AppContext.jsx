@@ -180,10 +180,11 @@ const appReducer = (state, action) => {
 };
 
 // Context
-const AppContext = createContext();
+const AppContext = createContext(null);
 
 // Provider component
 export const AppProvider = ({ children }) => {
+  console.log('🏗️ AppProvider rendering...');
   const [state, dispatch] = useReducer(appReducer, initialState);
   const hasInitializedRef = useRef(false);
   const hasFetchedDataRef = useRef(false);
@@ -562,6 +563,7 @@ export const AppProvider = ({ children }) => {
     }
   }, [state.isAuthenticated]);
 
+  console.log('🏗️ AppProvider returning context with state:', state);
   return (
     <AppContext.Provider value={{ state, actions }}>
       {children}
@@ -573,6 +575,7 @@ export const AppProvider = ({ children }) => {
 export const useApp = () => {
   const context = useContext(AppContext);
   if (!context) {
+    console.error('❌ useApp called outside of AppProvider. Current component stack:', new Error().stack);
     throw new Error('useApp must be used within an AppProvider');
   }
   return context;
