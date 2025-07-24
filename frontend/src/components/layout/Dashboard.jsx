@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/components/ui/Toast";
 import { NavigationBar } from "./NavigationBar";
-import { TeamDetailsModal } from "@/components/ui/TeamDetailsModal";
 import { TeamCreationModal } from "@/components/ui/TeamCreationModal";
 import { LeaderboardModal } from "@/components/ui/LeaderboardModal";
 import { ProfileSettingsModal } from "@/components/ui/ProfileSettingsModal";
@@ -35,7 +34,6 @@ export default function Dashboard() {
   const toast = useToast();
   const [refreshingChallenge, setRefreshingChallenge] = useState(false);
 
-  const handleJoinTeam = () => actions.toggleModal('teamDetails', true);
   const handleCreateTeam = () => actions.toggleModal('teamCreation', true);
   const handleViewLeaderboard = () => actions.toggleModal('leaderboard', true);
 
@@ -66,8 +64,8 @@ export default function Dashboard() {
     streak: user?.streak || 0,
     rank: user?.leetcodeData?.ranking || 0,
     rating: user?.totalScore || 0,
-    successRate: userStats?.successRate || 85,
-    weeklyProgress: userStats?.weeklyProgress || 68
+    successRate: userStats?.successRate || 0,
+    weeklyProgress: userStats?.weeklyProgress || 0
   };
 
   const teamData = team || null;
@@ -88,6 +86,7 @@ export default function Dashboard() {
                   <h1 className="text-2xl font-bold text-gray-900 mb-1">
                     Welcome back, {user?.name?.split(' ')[0] || 'Coder'}! 👋
                   </h1>
+                  <p className="text-gray-600">Ready to solve some problems today?</p>
                 </div>
                 
                 <div className="flex items-center gap-6">
@@ -102,25 +101,29 @@ export default function Dashboard() {
                   </div>
                   <div className="w-px h-12 bg-gray-200"></div>
                   <div className="text-center">
-                    <div className="text-2xl font-bold text-green-500">#{stats.rank || '2.5M+'}</div>
+                    <div className="text-2xl font-bold text-green-500">
+                      {stats.rank ? `#${stats.rank}` : 'Unranked'}
+                    </div>
                     <div className="text-sm text-gray-500">Rank</div>
                   </div>
                 </div>
               </div>
               
               {/* Progress Bar */}
-              <div className="mt-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">Weekly Progress</span>
-                  <span className="text-sm font-semibold text-blue-600">{stats.weeklyProgress}%</span>
+              {stats.weeklyProgress > 0 && (
+                <div className="mt-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-sm font-medium text-gray-700">Weekly Progress</span>
+                    <span className="text-sm font-semibold text-blue-600">{stats.weeklyProgress}%</span>
+                  </div>
+                  <div className="w-full bg-gray-200 rounded-full h-2">
+                    <div 
+                      className="bg-blue-600 h-2 rounded-full transition-all duration-500"
+                      style={{width: `${stats.weeklyProgress}%`}}
+                    ></div>
+                  </div>
                 </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div 
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                    style={{width: `${stats.weeklyProgress}%`}}
-                  ></div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
 
@@ -167,7 +170,9 @@ export default function Dashboard() {
                             }`}>
                               {dailyChallenge.difficulty}
                             </span>
-                            <span className="text-sm text-gray-500">{dailyChallenge.points} points</span>
+                            {dailyChallenge.points && (
+                              <span className="text-sm text-gray-500">{dailyChallenge.points} points</span>
+                            )}
                           </div>
                           
                           <h3 className="text-lg font-semibold text-gray-900 group-hover:text-red-500 transition-colors mb-2">
@@ -222,26 +227,39 @@ export default function Dashboard() {
                 </div>
                 
                 <div className="space-y-4">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Success Rate</span>
-                    <span className="text-sm font-semibold text-green-600">{stats.successRate}%</span>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-green-500 h-2 rounded-full"
-                      style={{width: `${stats.successRate}%`}}
-                    ></div>
-                  </div>
+                  {stats.successRate > 0 && (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-gray-600">Success Rate</span>
+                        <span className="text-sm font-semibold text-green-600">{stats.successRate}%</span>
+                      </div>
+                      <div className="w-full bg-gray-200 rounded-full h-2">
+                        <div 
+                          className="bg-green-500 h-2 rounded-full"
+                          style={{width: `${stats.successRate}%`}}
+                        ></div>
+                      </div>
+                    </>
+                  )}
                   
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Total Rating</span>
-                    <span className="text-sm font-semibold text-purple-600">{stats.rating}</span>
-                  </div>
+                  {stats.rating > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Total Rating</span>
+                      <span className="text-sm font-semibold text-purple-600">{stats.rating}</span>
+                    </div>
+                  )}
                   
                   <div className="flex items-center gap-2">
                     <Flame className="h-4 w-4 text-orange-500" />
                     <span className="text-sm text-gray-600">Current Streak: {stats.streak} days</span>
                   </div>
+                  
+                  {stats.successRate === 0 && stats.rating === 0 && (
+                    <div className="text-center py-4">
+                      <p className="text-sm text-gray-500">No performance data available yet</p>
+                      <p className="text-xs text-gray-400 mt-1">Start solving problems to see your stats!</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -260,10 +278,15 @@ export default function Dashboard() {
               </div>
               
               <div className="space-y-4">
-                {user?.recentActivity && user.recentActivity.length > 0 ? (
-                  user.recentActivity.slice(0, 3).map((activity, index) => (
-                    <div key={index} className="flex items-start gap-4 p-3 bg-gray-50 rounded-lg">
-                      <div className="w-5 h-5 bg-blue-500 rounded-full flex-shrink-0 mt-0.5"></div>
+                {userStats?.recentActivity && userStats.recentActivity.length > 0 ? (
+                  userStats.recentActivity.map((activity, index) => (
+                    <div key={index} className={`flex items-start gap-4 p-3 rounded-lg ${
+                      activity.type === 'solved' ? 'bg-green-50' :
+                      activity.type === 'attempted' ? 'bg-blue-50' : 'bg-purple-50'
+                    }`}>
+                      {activity.type === 'solved' && <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0 mt-0.5" />}
+                      {activity.type === 'attempted' && <PlayCircle className="h-5 w-5 text-blue-500 flex-shrink-0 mt-0.5" />}
+                      {activity.type === 'other' && <Users className="h-5 w-5 text-purple-500 flex-shrink-0 mt-0.5" />}
                       <div className="flex-1">
                         <p className="font-medium text-gray-900">{activity.title}</p>
                         <p className="text-sm text-gray-600">{activity.description}</p>
@@ -272,7 +295,9 @@ export default function Dashboard() {
                   ))
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-gray-500 text-sm">No recent activity</p>
+                    <Clock className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No recent activity</p>
+                    <p className="text-sm text-gray-400 mt-1">Your coding activity will appear here</p>
                   </div>
                 )}
               </div>
@@ -295,7 +320,7 @@ export default function Dashboard() {
               
               <div className="space-y-3">
                 {safeLeaderboard.length > 0 ? (
-                  safeLeaderboard.slice(0, 3).map((leader, index) => (
+                  safeLeaderboard.slice(0, 3).map((player, index) => (
                     <div key={index} className={`flex items-center gap-4 p-3 rounded-lg ${
                       index === 0 ? 'bg-gradient-to-r from-yellow-50 to-amber-50' :
                       index === 1 ? 'bg-gray-50' : 'bg-amber-50'
@@ -315,8 +340,10 @@ export default function Dashboard() {
                         )}
                       </div>
                       <div className="flex-1">
-                        <p className="font-semibold text-gray-900">{leader.name}</p>
-                        <p className="text-sm text-gray-600">{leader.score} points</p>
+                        <p className={`${index === 0 ? 'font-semibold' : 'font-medium'} text-gray-900`}>
+                          {player.name}
+                        </p>
+                        <p className="text-sm text-gray-600">{player.score} points</p>
                       </div>
                       <span className="text-xl">
                         {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
@@ -325,22 +352,67 @@ export default function Dashboard() {
                   ))
                 ) : (
                   <div className="text-center py-8">
-                    <p className="text-gray-500 text-sm">No leaderboard data available</p>
+                    <Trophy className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-gray-500">No leaderboard data</p>
+                    <p className="text-sm text-gray-400 mt-1">Rankings will appear here</p>
                   </div>
                 )}
               </div>
               
-              <div className="mt-4 pt-4 border-t border-gray-200">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Your Position</span>
-                  <span className="font-bold text-lg text-blue-600">#{stats.rank || '2.5M+'}</span>
+              {stats.rank > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-200">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Your Position</span>
+                    <span className="font-bold text-lg text-blue-600">#{stats.rank}</span>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
           </div>
 
+          {/* Team Section */}
+          {teamData ? (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <Users className="h-6 w-6 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Team: {teamData.name}</h3>
+                    <p className="text-sm text-gray-600">
+                      {teamData.members?.length || 0} members
+                      {teamData.rank && ` • Rank #${teamData.rank}`}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-gray-100 rounded-xl flex items-center justify-center">
+                    <Users className="h-6 w-6 text-gray-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold text-gray-900">Create a Team</h3>
+                    <p className="text-sm text-gray-600">Start collaborating with other coders!</p>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={handleCreateTeam}
+                    className="bg-red-600 hover:bg-red-700 text-white px-6 py-2 rounded-lg font-medium transition-colors"
+                  >
+                    Create Team
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Modals */}
-          {modals.teamDetails && <TeamDetailsModal />}
           {modals.teamCreation && <TeamCreationModal />}
           {modals.leaderboard && <LeaderboardModal />}
           {modals.profileSettings && <ProfileSettingsModal />}

@@ -10,7 +10,9 @@
     "test:daily-problem": "node scripts/testDailyProblem.js",
     "check:daily-problem": "node scripts/checkDailyProblem.js",
     "monitor:daily-problem": "node scripts/monitorDailyProblem.js",
-    "validate:env": "node scripts/validateEnv.js"
+    "validate:env": "node scripts/validateEnv.js",
+    "cleanup:db": "node scripts/masterCleanup.js",
+    "cleanup:db:dry": "node scripts/masterCleanup.js --dry-run"
   },
   "keywords": [],
   "author": "",

@@ -5,6 +5,7 @@ import { ToastProvider } from '@/components/ui/Toast';
 import ErrorBoundary from '@/components/ErrorBoundary';
 import { useAuth } from '@/hooks/useAuth';
 import { withLazyLoading } from '@/lib/performance';
+import { LandingPageLoader, DashboardLoader } from '@/components/ui/UnifiedLoader';
 import './index.css';
 
 // Lazy load components for better performance
@@ -17,59 +18,90 @@ const LeetCodeOnboardingModal = withLazyLoading(() => import('@/components/ui/Le
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const [showDashboardLoader, setShowDashboardLoader] = useState(false);
+  
+  useEffect(() => {
+    if (isAuthenticated && !loading) {
+      setShowDashboardLoader(true);
+      // Show dashboard loader for a brief moment before showing dashboard
+      const timer = setTimeout(() => {
+        setShowDashboardLoader(false);
+      }, 2000); // Show for 2 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, loading]);
   
   if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+    return <DashboardLoader />;
+  }
+
+  if (showDashboardLoader) {
+    return <DashboardLoader />;
   }
   
   return isAuthenticated ? children : <Navigate to="/" replace />;
 };
 
-// Public Route Component (redirects to dashboard if authenticated)
+// Public Route Component with proper landing page loading
 const PublicRoute = ({ children }) => {
   const { isAuthenticated, loading } = useAuth();
+  const [showLandingLoader, setShowLandingLoader] = useState(true);
   
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-      </div>
-    );
+  // Show landing loader on initial load
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLandingLoader(false);
+    }, 3000); // Show for 3 seconds on initial load
+    
+    return () => clearTimeout(timer);
+  }, []);
+  
+  if (loading || showLandingLoader) {
+    return <LandingPageLoader />;
   }
   
   return !isAuthenticated ? children : <Navigate to="/dashboard" replace />;
 };
 
 function AppContent() {
+  const location = useLocation();
+  
+  // Determine which loader to show based on the current route
+  const getFallbackLoader = () => {
+    if (location.pathname === '/dashboard') {
+      return <DashboardLoader />;
+    }
+    return <LandingPageLoader />;
+  };
+
   return (
     <OAuthCallback>
-      <Routes>
-        <Route 
-          path="/" 
-          element={
-            <PublicRoute>
-              <LandingPage />
-            </PublicRoute>
-          } 
-        />
-        <Route 
-          path="/dashboard" 
-          element={
-            <ProtectedRoute>
-              <Dashboard />
-            </ProtectedRoute>
-          } 
-        />
-        <Route 
-          path="/onboarding" 
-          element={<OnboardingPage />} 
-        />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
+      <Suspense fallback={getFallbackLoader()}>
+        <Routes>
+          <Route 
+            path="/" 
+            element={
+              <PublicRoute>
+                <LandingPage />
+              </PublicRoute>
+            } 
+          />
+          <Route 
+            path="/dashboard" 
+            element={
+              <ProtectedRoute>
+                <Dashboard />
+              </ProtectedRoute>
+            } 
+          />
+          <Route 
+            path="/onboarding" 
+            element={<OnboardingPage />} 
+          />
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Suspense>
     </OAuthCallback>
   );
 }

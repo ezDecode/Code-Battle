@@ -14,6 +14,7 @@ export function NavigationBar() {
   const [teamDropdownOpen, setTeamDropdownOpen] = useState(false);
   const toast = useToast();
   const teamDropdownRef = useRef(null);
+  const avatarDropdownRef = useRef(null);
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -32,11 +33,14 @@ export function NavigationBar() {
     setTeamDropdownOpen(false);
   };
 
-  // Close team dropdown when clicking outside
+  // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
       if (teamDropdownRef.current && !teamDropdownRef.current.contains(event.target)) {
         setTeamDropdownOpen(false);
+      }
+      if (avatarDropdownRef.current && !avatarDropdownRef.current.contains(event.target)) {
+        setIsAvatarDropdownOpen(false);
       }
     }
 
@@ -142,26 +146,21 @@ export function NavigationBar() {
           </button>
 
           {/* User Profile with Dropdown */}
-          <div className="relative">
+          <div className="relative" ref={avatarDropdownRef}>
             <button
-              onMouseEnter={() => setIsAvatarDropdownOpen(true)}
-              onMouseLeave={() => setIsAvatarDropdownOpen(false)}
+              onClick={() => setIsAvatarDropdownOpen(!isAvatarDropdownOpen)}
               className="flex items-center space-x-2 p-2 rounded-xl hover:bg-black/10 transition-colors"
             >
               <div className="flex items-center space-x-3">
                 <Avatar user={user} size="md" />
-                <ChevronDown className="h-4 w-4 text-black" />
+                <ChevronDown className={`h-4 w-4 text-black transition-transform ${isAvatarDropdownOpen ? 'rotate-180' : ''}`} />
               </div>
             </button>
 
             {/* Avatar Dropdown */}
             <AnimatePresence>
               {isAvatarDropdownOpen && (
-                <div
-                  onMouseEnter={() => setIsAvatarDropdownOpen(true)}
-                  onMouseLeave={() => setIsAvatarDropdownOpen(false)}
-                  className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50"
-                >
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-50">
                   {/* User Info */}
                   <div className="px-4 py-3 border-b border-gray-200">
                     <div className="flex items-center space-x-3">
