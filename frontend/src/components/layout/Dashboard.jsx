@@ -1,11 +1,13 @@
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useApp } from "@/contexts/AppContext";
+import { useToast } from "@/components/ui/Toast";
 import { NavigationBar } from "./NavigationBar";
-import { NotificationSystem } from "@/components/ui/NotificationSystem";
 import { LeetCodeSync } from "@/components/ui/LeetCodeSync";
 import { TeamDetailsModal } from "@/components/ui/TeamDetailsModal";
 import { LeaderboardModal } from "@/components/ui/LeaderboardModal";
+import { DashboardLoadingSkeleton } from "@/components/ui/LoadingSkeleton";
+import { DashboardErrorBoundary, withErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
 import { 
   Trophy, 
   Users, 
@@ -41,7 +43,8 @@ const BentoCard = ({ className, children, gradient, onClick, hover = true }) => 
 
 export default function Dashboard() {
   const { state, actions } = useApp();
-  const { user, team, dailyChallenge, leaderboard, modals, userStats } = state;
+  const { user, team, dailyChallenge, leaderboard, modals, userStats, loading } = state;
+  const toast = useToast();
 
   const handleJoinTeam = () => {
     actions.toggleModal('teamDetails', true);
@@ -54,6 +57,53 @@ export default function Dashboard() {
   const handleSyncLeetCode = () => {
     actions.toggleModal('leetcodeSync', true);
   };
+
+  // Demo toast functions
+  const showSuccessToast = () => {
+    toast.success('Challenge completed successfully! You earned 150 points.', {
+      title: 'Well Done!',
+      action: {
+        label: 'View Details',
+        onClick: () => console.log('View details clicked')
+      }
+    });
+  };
+
+  const showErrorToast = () => {
+    toast.error('Failed to submit solution. Please check your code and try again.', {
+      title: 'Submission Failed'
+    });
+  };
+
+  const showWarningToast = () => {
+    toast.warning('Your session will expire in 5 minutes. Please save your work.', {
+      title: 'Session Warning'
+    });
+  };
+
+  const showInfoToast = () => {
+    toast.info('New daily challenge is now available!', {
+      title: 'Daily Challenge',
+      action: {
+        label: 'Start Challenge',
+        onClick: () => console.log('Start challenge clicked')
+      }
+    });
+  };
+
+  const showLoadingToast = () => {
+    toast.loading('Analyzing your code performance...');
+  };
+
+  // Show loading skeleton if user is not authenticated or data is loading
+  if (loading || !user) {
+    return (
+      <>
+        <NavigationBar />
+        <DashboardLoadingSkeleton />
+      </>
+    );
+  }
 
   // Remove the problematic useEffect that causes infinite loops
   // Data fetching is now handled in AppContext
@@ -90,23 +140,24 @@ export default function Dashboard() {
   const safeLeaderboard = Array.isArray(leaderboard) ? leaderboard : [];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
-      <NavigationBar />
-      
-      <div className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Welcome Section */}
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center py-8"
-        >
-          <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            Welcome back, {user?.name?.split(' ')[0] || user?.displayName || 'Coder'}! 👋
-          </h1>
-          <p className="text-gray-600 text-lg">
-            Ready to crush some algorithms today?
-          </p>
-        </motion.div>
+    <DashboardErrorBoundary>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-blue-50 to-indigo-100">
+        <NavigationBar />
+        
+        <div className="max-w-7xl mx-auto p-6 space-y-6">
+          {/* Welcome Section */}
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center py-8"
+          >
+            <h1 className="text-4xl font-bold text-gray-900 mb-2">
+              Welcome back, {user?.name?.split(' ')[0] || user?.displayName || 'Coder'}! 👋
+            </h1>
+            <p className="text-gray-600 text-lg">
+              Ready to crush some algorithms today?
+            </p>
+          </motion.div>
 
         {/* Main Bento Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -332,14 +383,52 @@ export default function Dashboard() {
           </BentoCard>
 
         </div>
-      </div>
 
-      {/* Modals */}
-      {modals.teamDetails && <TeamDetailsModal />}
-      {modals.leaderboard && <LeaderboardModal />}
-      {modals.leetcodeSync && <LeetCodeSync />}
-      
-      <NotificationSystem />
-    </div>
+        {/* Toast Demo Section - Development Only */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-8 p-6 bg-white rounded-2xl shadow-lg border border-gray-200">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Toast Demo (Dev Only)</h3>
+            <div className="flex flex-wrap gap-3">
+              <button
+                onClick={showSuccessToast}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors text-sm font-medium"
+              >
+                Success Toast
+              </button>
+              <button
+                onClick={showErrorToast}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors text-sm font-medium"
+              >
+                Error Toast
+              </button>
+              <button
+                onClick={showWarningToast}
+                className="px-4 py-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors text-sm font-medium"
+              >
+                Warning Toast
+              </button>
+              <button
+                onClick={showInfoToast}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors text-sm font-medium"
+              >
+                Info Toast
+              </button>
+              <button
+                onClick={showLoadingToast}
+                className="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors text-sm font-medium"
+              >
+                Loading Toast
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Modals */}
+        {modals.teamDetails && <TeamDetailsModal />}
+        {modals.leaderboard && <LeaderboardModal />}
+        {modals.leetcodeSync && <LeetCodeSync />}
+        </div>
+      </div>
+    </DashboardErrorBoundary>
   );
 }

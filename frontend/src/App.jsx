@@ -1,14 +1,19 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { AppProvider } from '@/contexts/AppContext';
-import LandingPage from '@/components/layout/LandingPage';
-import Dashboard from '@/components/layout/Dashboard';
-import OnboardingPage from '@/components/layout/OnboardingPage';
-import OAuthCallback from '@/components/OAuthCallback';
+import { ToastProvider } from '@/components/ui/Toast';
 import ErrorBoundary from '@/components/ErrorBoundary';
-import { LeetCodeOnboardingModal } from '@/components/ui/LeetCodeOnboardingModal';
+import { ConnectionStatus } from '@/components/ui/ConnectionStatus';
 import { useAuth } from '@/hooks/useAuth';
+import { withLazyLoading } from '@/lib/performance';
 import './index.css';
+
+// Lazy load components for better performance
+const LandingPage = withLazyLoading(() => import('@/components/layout/LandingPage'));
+const Dashboard = withLazyLoading(() => import('@/components/layout/Dashboard'));
+const OnboardingPage = withLazyLoading(() => import('@/components/layout/OnboardingPage'));
+const OAuthCallback = withLazyLoading(() => import('@/components/OAuthCallback'));
+const LeetCodeOnboardingModal = withLazyLoading(() => import('@/components/ui/LeetCodeOnboardingModal'));
 
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
@@ -43,6 +48,7 @@ const PublicRoute = ({ children }) => {
 function AppContent() {
   return (
     <OAuthCallback>
+      <ConnectionStatus />
       <Routes>
         <Route 
           path="/" 
@@ -73,11 +79,13 @@ function AppContent() {
 function App() {
   return (
     <ErrorBoundary>
-      <AppProvider>
-        <Router>
-          <AppContent />
-        </Router>
-      </AppProvider>
+      <ToastProvider>
+        <AppProvider>
+          <Router>
+            <AppContent />
+          </Router>
+        </AppProvider>
+      </ToastProvider>
     </ErrorBoundary>
   );
 }

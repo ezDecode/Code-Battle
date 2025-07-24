@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/contexts/AppContext";
+import { RealTimeLeaderboard } from "./RealTimeLeaderboard";
 import { 
   X, 
   Search, 

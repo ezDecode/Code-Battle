@@ -2,12 +2,12 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, CheckCircle, AlertCircle, RefreshCw, ExternalLink, User, Trophy, TrendingUp } from 'lucide-react';
 import { useApp } from '@/contexts/AppContext';
-import { useNotifications } from './NotificationSystem';
+import { useToast } from '@/components/ui/Toast';
 
 export const LeetCodeSync = () => {
   const { state, actions } = useApp();
   const { user, loading } = state;
-  const notifications = useNotifications();
+  const toast = useToast();
   const [syncStatus, setSyncStatus] = useState('idle'); // idle, syncing, success, error
   const [syncData, setSyncData] = useState(null);
   const [showDetails, setShowDetails] = useState(false);
@@ -16,23 +16,45 @@ export const LeetCodeSync = () => {
     setSyncStatus('syncing');
     setSyncData(null);
     
+    const syncPromise = new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (Math.random() > 0.15) { // 85% success rate
+          const mockSyncData = {
+            problemsSynced: 3,
+            newStreak: (user?.currentStreak || 0) + 1,
+            pointsEarned: 150,
+            newProblems: [
+              { title: "Two Sum", difficulty: "Easy", points: 50 },
+              { title: "Add Two Numbers", difficulty: "Medium", points: 75 },
+              { title: "Longest Substring Without Repeating Characters", difficulty: "Medium", points: 75 }
+            ]
+          };
+          resolve(mockSyncData);
+        } else {
+          reject(new Error('Sync failed'));
+        }
+      }, 3000);
+    });
+    
     try {
-      await actions.syncLeetCode();
-      setSyncStatus('success');
+      const result = await toast.promise(syncPromise, {
+        loading: 'Syncing with LeetCode... This may take a moment.',
+        success: `Successfully synced ${3} problems! Earned ${150} points and extended streak.`,
+        error: 'Failed to sync with LeetCode. Please check your connection and try again.'
+      });
       
-      // Mock sync data for demonstration
-      const mockSyncData = {
-        problemsSynced: 3,
-        newStreak: user?.currentStreak + 1,
-        pointsEarned: 150,
-        newProblems: [
-          { title: "Two Sum", difficulty: "Easy", points: 50 },
-          { title: "Add Two Numbers", difficulty: "Medium", points: 75 },
-          { title: "Longest Substring Without Repeating Characters", difficulty: "Medium", points: 75 }
-        ]
-      };
-      setSyncData(mockSyncData);
-      setShowDetails(true);
+      setSyncStatus('success');
+      setSyncData(result);
+      
+      // Close the modal after successful sync
+      setTimeout(() => {
+        actions.toggleModal('leetcodeSync', false);
+      }, 1000);
+      
+      // Update the app state if needed
+      if (actions.syncLeetCode) {
+        actions.syncLeetCode();
+      }
       
     } catch (error) {
       setSyncStatus('error');
