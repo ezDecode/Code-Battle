@@ -9,11 +9,11 @@ import { LeaderboardModal } from "@/components/ui/LeaderboardModal";
 import { ProfileSettingsModal } from "@/components/ui/ProfileSettingsModal";
 import { DashboardLoadingSkeleton } from "@/components/ui/LoadingSkeleton";
 import { DashboardErrorBoundary, withErrorBoundary } from "@/components/ui/ComponentErrorBoundary";
+import { api } from "@/services/api";
 import { 
   Trophy, 
   Users, 
   Target, 
-  TrendingUp, 
   Code, 
   Calendar,
   Star,
@@ -22,7 +22,8 @@ import {
   Crown,
   Medal,
   Flame,
-  Plus
+  Plus,
+  RefreshCw
 } from "lucide-react";
 
 const BentoCard = ({ className, children, gradient, onClick, hover = true }) => (
@@ -46,6 +47,7 @@ export default function Dashboard() {
   const { state, actions } = useApp();
   const { user, team, dailyChallenge, leaderboard, modals, userStats, loading } = state;
   const toast = useToast();
+  const [refreshingChallenge, setRefreshingChallenge] = useState(false);
 
   const handleJoinTeam = () => {
     actions.toggleModal('teamDetails', true);
@@ -57,6 +59,18 @@ export default function Dashboard() {
 
   const handleViewLeaderboard = () => {
     actions.toggleModal('leaderboard', true);
+  };
+
+  const handleRefreshDailyChallenge = async () => {
+    setRefreshingChallenge(true);
+    try {
+      await actions.fetchDashboardData();
+      toast.show('Daily challenge refreshed!', 'success');
+    } catch (error) {
+      toast.show('Failed to refresh daily challenge', 'error');
+    } finally {
+      setRefreshingChallenge(false);
+    }
   };
 
   // Show loading skeleton if user is not authenticated or data is loading
@@ -81,9 +95,7 @@ export default function Dashboard() {
     problemsSolved: user?.leetcodeData?.submitStats?.easy + user?.leetcodeData?.submitStats?.medium + user?.leetcodeData?.submitStats?.hard || userStats.problemsSolved || 0,
     successRate: userStats.successRate || 0,
     currentStreak: user?.streak || userStats.currentStreak || 0,
-    weeklyProgress: userStats.weeklyProgress || 0,
-    // Use real LeetCode data for recent solves if available, otherwise show empty
-    recentSolves: userStats.recentSolves || []
+    weeklyProgress: userStats.weeklyProgress || 0
   };
 
   // Use real team data if available
@@ -171,11 +183,21 @@ export default function Dashboard() {
                 </div>
                 <h3 className="text-lg sm:text-xl font-bold">Today's LeetCode Challenge</h3>
               </div>
-              {dailyChallenge?.date && (
-                <div className="text-xs bg-white/20 px-2 py-1 rounded-lg">
-                  {new Date(dailyChallenge.date).toLocaleDateString()}
-                </div>
-              )}
+              <div className="flex items-center space-x-3">
+                {dailyChallenge?.date && (
+                  <div className="text-xs bg-white/20 px-2 py-1 rounded-lg">
+                    {new Date(dailyChallenge.date).toLocaleDateString()}
+                  </div>
+                )}
+                <button
+                  onClick={handleRefreshDailyChallenge}
+                  disabled={refreshingChallenge}
+                  className="p-2 bg-white/20 rounded-lg hover:bg-white/30 transition-colors disabled:opacity-50"
+                  title="Refresh daily challenge"
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshingChallenge ? 'animate-spin' : ''}`} />
+                </button>
+              </div>
             </div>
             
             <div className="space-y-4">
@@ -193,12 +215,27 @@ export default function Dashboard() {
                           dailyChallenge.difficulty === 'Medium' ? 'bg-yellow-400' : 'bg-red-400'
                         }`} />
                         <div>
-                          <p className="font-semibold text-lg group-hover:text-blue-200 transition-colors">
-                            {dailyChallenge.title}
-                          </p>
-                          <p className="text-blue-200 text-sm">
-                            {dailyChallenge.difficulty} • {dailyChallenge.points} pts
-                          </p>
+                          <div className="flex items-center space-x-2">
+                            <p className="font-semibold text-lg group-hover:text-blue-200 transition-colors">
+                              {dailyChallenge.title}
+                            </p>
+                            {dailyChallenge.isFallback && (
+                              <span className="text-xs bg-yellow-500/20 text-yellow-300 px-2 py-1 rounded-full">
+                                Fallback
+                              </span>
+                            )}
+                            {dailyChallenge.isToday && (
+                              <span className="text-xs bg-green-500/20 text-green-300 px-2 py-1 rounded-full">
+                                Today
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center space-x-3 text-blue-200 text-sm">
+                            <span>{dailyChallenge.difficulty} • {dailyChallenge.points} pts</span>
+                            {dailyChallenge.topicCount && (
+                              <span>• {dailyChallenge.topicCount} topics</span>
+                            )}
+                          </div>
                         </div>
                       </div>
                       <div className="flex items-center space-x-2">
@@ -222,7 +259,7 @@ export default function Dashboard() {
                     {/* Topic Tags */}
                     {dailyChallenge.topicTags && dailyChallenge.topicTags.length > 0 && (
                       <div className="flex flex-wrap gap-1 mb-3">
-                        {dailyChallenge.topicTags.slice(0, 3).map((tag, index) => (
+                        {dailyChallenge.topicTags.slice(0, 4).map((tag, index) => (
                           <span 
                             key={index}
                             className="text-xs bg-white/20 text-blue-100 px-2 py-1 rounded-full"
@@ -230,24 +267,36 @@ export default function Dashboard() {
                             {tag.name || tag}
                           </span>
                         ))}
-                        {dailyChallenge.topicTags.length > 3 && (
+                        {dailyChallenge.topicTags.length > 4 && (
                           <span className="text-xs bg-white/20 text-blue-100 px-2 py-1 rounded-full">
-                            +{dailyChallenge.topicTags.length - 3} more
+                            +{dailyChallenge.topicTags.length - 4} more
                           </span>
                         )}
                       </div>
                     )}
                     
-                    {/* Action Button */}
+                    {/* Action Section */}
                     <div className="flex items-center justify-between">
-                      <div className="text-xs text-blue-200">
-                        Click to solve on LeetCode
+                      <div className="flex items-center space-x-4 text-xs text-blue-200">
+                        <span>🚀 Click to solve on LeetCode</span>
+                        {dailyChallenge.fetchedAt && (
+                          <span>Updated: {new Date(dailyChallenge.fetchedAt).toLocaleTimeString()}</span>
+                        )}
                       </div>
                       <div className="flex items-center space-x-2 text-xs text-blue-200">
                         <Star className="h-3 w-3" />
                         <span>Daily Challenge</span>
                       </div>
                     </div>
+                    
+                    {/* Fallback Warning */}
+                    {dailyChallenge.isFallback && dailyChallenge.fallbackReason && (
+                      <div className="mt-3 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded-lg">
+                        <p className="text-xs text-yellow-300">
+                          ⚠️ Using fallback problem due to: {dailyChallenge.fallbackReason}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

@@ -20,8 +20,7 @@ const initialState = {
     currentStreak: 0,
     weeklyProgress: 0,
     rank: 0,
-    rating: 0,
-    recentSolves: []
+    rating: 0
   },
   
   // UI state

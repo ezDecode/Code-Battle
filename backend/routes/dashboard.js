@@ -21,37 +21,68 @@ router.get('/', auth, async (req, res) => {
       currentStreak: user.streak || 0,
       weeklyProgress: 0, // TODO: Calculate weekly progress
       rank: user.leetcodeData?.ranking || 0,
-      rating: user.totalScore || 0,
-      recentSolves: [] // TODO: Get from LeetCode API recent submissions
+      rating: user.totalScore || 0
     };
 
     // Fetch today's LeetCode daily challenge
     let dailyChallenge = null;
     try {
+      console.log('📡 Fetching today\'s LeetCode daily challenge...');
+      const startTime = Date.now();
+      
       const dailyProblem = await leetcodeService.getDailyProblem();
+      
+      const fetchTime = Date.now() - startTime;
+      console.log(`✅ Daily challenge fetched in ${fetchTime}ms`);
+      
+      // Enhanced daily challenge object with more details
       dailyChallenge = {
         id: dailyProblem.question.titleSlug,
         title: dailyProblem.question.title,
         difficulty: dailyProblem.question.difficulty,
-        description: dailyProblem.question.content?.replace(/<[^>]*>/g, '').substring(0, 200) + '...', // Strip HTML and truncate
-        link: dailyProblem.link,
+        description: dailyProblem.question.content 
+          ? dailyProblem.question.content.replace(/<[^>]*>/g, '').substring(0, 300) + '...' 
+          : 'Click to view the full problem description on LeetCode.',
+        link: `https://leetcode.com${dailyProblem.link}`, // Full URL for external access
         date: dailyProblem.date,
         topicTags: dailyProblem.question.topicTags || [],
+        exampleTestcases: dailyProblem.question.exampleTestcases,
         completed: false, // TODO: Check if user has solved this problem
         points: dailyProblem.question.difficulty === 'Easy' ? 100 : 
-                dailyProblem.question.difficulty === 'Medium' ? 200 : 300
+                dailyProblem.question.difficulty === 'Medium' ? 200 : 300,
+        fetchedAt: new Date().toISOString(),
+        // Additional metadata
+        isToday: dailyProblem.date === new Date().toISOString().split('T')[0],
+        topicCount: dailyProblem.question.topicTags?.length || 0
       };
+      
+      console.log(`📝 Today's challenge: "${dailyChallenge.title}" (${dailyChallenge.difficulty})`);
+      
     } catch (error) {
-      console.error('Failed to fetch daily LeetCode problem:', error);
-      // Fallback to default challenge
+      console.error('❌ Failed to fetch daily LeetCode problem:', error.message);
+      
+      // Enhanced fallback with today's date
       dailyChallenge = {
-        id: 1,
+        id: 'two-sum',
         title: "Two Sum",
         difficulty: "Easy",
-        description: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
+        description: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target. You may assume that each input would have exactly one solution, and you may not use the same element twice.",
+        link: "https://leetcode.com/problems/two-sum/",
+        date: new Date().toISOString().split('T')[0],
+        topicTags: [
+          { name: "Array", slug: "array" },
+          { name: "Hash Table", slug: "hash-table" }
+        ],
         completed: false,
-        points: 100
+        points: 100,
+        fetchedAt: new Date().toISOString(),
+        isFallback: true,
+        isToday: true,
+        topicCount: 2,
+        fallbackReason: error.message
       };
+      
+      console.log('🔄 Using fallback challenge: Two Sum');
     }
 
     // Get dashboard data

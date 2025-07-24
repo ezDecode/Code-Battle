@@ -3,7 +3,8 @@ const { LeetCode } = require('leetcode-query');
 class LeetCodeQueryService {
   constructor() {
     this.client = new LeetCode();
-    this.rateLimitDelay = 1000; // 1 second between requests
+    // Use environment variable for rate limit delay, with fallback
+    this.rateLimitDelay = parseInt(process.env.LEETCODE_RATE_LIMIT_DELAY) || 1000;
     this.lastRequestTime = 0;
   }
 

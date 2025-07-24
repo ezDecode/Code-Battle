@@ -350,6 +350,17 @@ class ApiService {
     }
   };
 
+  // Daily Challenge API
+  dailyChallenge = {
+    get: async () => {
+      return await this.request('/daily-challenge');
+    },
+
+    checkStatus: async (titleSlug) => {
+      return await this.request(`/daily-challenge/status/${titleSlug}`);
+    }
+  };
+
   // LeetCode API
   leetcode = {
     sync: async () => {
