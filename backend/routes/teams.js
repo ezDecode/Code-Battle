@@ -4,6 +4,31 @@ const User = require('../models/User');
 const auth = require('../middleware/auth');
 const router = express.Router();
 
+// @route   GET /api/teams/check-name/:name
+// @desc    Check if team name is available
+// @access  Private
+router.get('/check-name/:name', auth, async (req, res) => {
+  try {
+    const { name } = req.params;
+    
+    if (!name || name.trim().length < 3) {
+      return res.json({ available: false, message: 'Team name must be at least 3 characters' });
+    }
+    
+    const existingTeam = await Team.findOne({ 
+      name: { $regex: new RegExp(`^${name.trim()}$`, 'i') } 
+    });
+    
+    res.json({ 
+      available: !existingTeam,
+      message: existingTeam ? 'Team name already exists' : 'Team name is available'
+    });
+  } catch (error) {
+    console.error('Check team name error:', error);
+    res.status(500).json({ available: false, message: 'Server error' });
+  }
+});
+
 // @route   POST /api/teams
 // @desc    Create a new team
 // @access  Private

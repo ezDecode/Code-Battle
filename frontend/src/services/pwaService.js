@@ -31,6 +31,10 @@ class PWAService {
   // Register service worker
   async registerServiceWorker() {
     try {
+      // Temporarily disable service worker to fix OAuth configuration fetch issues
+      console.log('🔧 PWA Service: Service Worker registration temporarily disabled');
+      return;
+      
       this.swRegistration = await navigator.serviceWorker.register('/sw.js', {
         scope: '/'
       });

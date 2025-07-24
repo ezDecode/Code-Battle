@@ -13,6 +13,7 @@ const initialState = {
   dailyChallenge: null,
   teamMembers: [],
   leaderboard: [],
+  team: null,
   userStats: {
     problemsSolved: 0,
     successRate: 0,
@@ -30,7 +31,9 @@ const initialState = {
     teamDetails: false,
     leaderboard: false,
     notifications: false,
-    leetcodeOnboarding: false
+    leetcodeOnboarding: false,
+    teamCreation: false,
+    profileSettings: false
   },
   
   // Error handling
@@ -61,6 +64,9 @@ export const ActionTypes = {
   SYNC_LEETCODE_START: 'SYNC_LEETCODE_START',
   SYNC_LEETCODE_SUCCESS: 'SYNC_LEETCODE_SUCCESS',
   SYNC_LEETCODE_FAILURE: 'SYNC_LEETCODE_FAILURE',
+  
+  // Team actions
+  SET_TEAM: 'SET_TEAM',
   
   // Clear errors
   CLEAR_ERROR: 'CLEAR_ERROR'
@@ -134,6 +140,12 @@ const appReducer = (state, action) => {
         user: { ...state.user, ...action.payload.user },
         userStats: { ...state.userStats, ...action.payload.stats },
         error: null
+      };
+      
+    case ActionTypes.SET_TEAM:
+      return {
+        ...state,
+        team: action.payload
       };
       
     case ActionTypes.TOGGLE_MODAL:
@@ -347,10 +359,11 @@ export const AppProvider = ({ children }) => {
     },
 
     // OAuth actions
-    initiateGoogleAuth: () => {
+    initiateGoogleAuth: async () => {
       try {
-        api.auth.initiateGoogleAuth();
+        await api.auth.initiateGoogleAuth();
       } catch (error) {
+        console.error('Google OAuth initialization failed:', error);
         actions.addNotification({
           type: 'error',
           message: 'Google authentication is not available.',
@@ -359,10 +372,11 @@ export const AppProvider = ({ children }) => {
       }
     },
 
-    initiateGitHubAuth: () => {
+    initiateGitHubAuth: async () => {
       try {
-        api.auth.initiateGitHubAuth();
+        await api.auth.initiateGitHubAuth();
       } catch (error) {
+        console.error('GitHub OAuth initialization failed:', error);
         actions.addNotification({
           type: 'error',
           message: 'GitHub authentication is not available.',
@@ -391,6 +405,11 @@ export const AppProvider = ({ children }) => {
 
     // Data fetching
     fetchDashboardData,
+
+    // Team actions
+    setTeam: (team) => {
+      dispatch({ type: ActionTypes.SET_TEAM, payload: team });
+    },
 
     // LeetCode sync
     syncLeetCode: async () => {

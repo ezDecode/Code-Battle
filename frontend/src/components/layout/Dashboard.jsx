@@ -5,6 +5,7 @@ import { useToast } from "@/components/ui/Toast";
 import { NavigationBar } from "./NavigationBar";
 import { LeetCodeSync } from "@/components/ui/LeetCodeSync";
 import { TeamDetailsModal } from "@/components/ui/TeamDetailsModal";
+import { TeamCreationModal } from "@/components/ui/TeamCreationModal";
 import { LeaderboardModal } from "@/components/ui/LeaderboardModal";
 import { ProfileSettingsModal } from "@/components/ui/ProfileSettingsModal";
 import { DashboardLoadingSkeleton } from "@/components/ui/LoadingSkeleton";
@@ -22,7 +23,8 @@ import {
   ChevronRight,
   Crown,
   Medal,
-  Flame
+  Flame,
+  Plus
 } from "lucide-react";
 
 const BentoCard = ({ className, children, gradient, onClick, hover = true }) => (
@@ -49,6 +51,10 @@ export default function Dashboard() {
 
   const handleJoinTeam = () => {
     actions.toggleModal('teamDetails', true);
+  };
+
+  const handleCreateTeam = () => {
+    actions.toggleModal('teamCreation', true);
   };
 
   const handleViewLeaderboard = () => {
@@ -166,7 +172,8 @@ export default function Dashboard() {
           <BentoCard
             className="lg:col-span-1"
             gradient={teamData ? "bg-gradient-to-br from-green-500 to-teal-600 text-white" : "bg-gradient-to-br from-gray-400 to-gray-600 text-white"}
-            onClick={handleJoinTeam}
+            onClick={teamData ? handleJoinTeam : undefined}
+            hover={!!teamData}
           >
             <div className="flex items-center space-x-3 mb-4">
               <div className="p-2 bg-white/20 rounded-xl">
@@ -191,11 +198,23 @@ export default function Dashboard() {
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <p className="text-gray-200">No team yet</p>
-                <div className="flex items-center text-sm text-gray-200">
-                  <span>Join or create team</span>
-                  <ChevronRight className="h-4 w-4 ml-1" />
+                <div className="space-y-2">
+                  <button
+                    onClick={handleCreateTeam}
+                    className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 rounded-lg p-3 text-white transition-all duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Create Team</span>
+                  </button>
+                  <button
+                    onClick={handleJoinTeam}
+                    className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-lg p-3 text-white transition-all duration-200 flex items-center justify-center space-x-2"
+                  >
+                    <Users className="h-4 w-4" />
+                    <span>Join Team</span>
+                  </button>
                 </div>
               </div>
             )}
@@ -350,6 +369,7 @@ export default function Dashboard() {
 
         {/* Modals */}
         {modals.teamDetails && <TeamDetailsModal />}
+        {modals.teamCreation && <TeamCreationModal />}
         {modals.leaderboard && <LeaderboardModal />}
         {modals.leetcodeSync && <LeetCodeSync />}
         {modals.profileSettings && <ProfileSettingsModal />}

@@ -105,13 +105,28 @@ class ApiService {
     }
     
     try {
-      const response = await fetch(`${API_BASE_URL}/auth/oauth-status`);
+      const response = await fetch(`${API_BASE_URL}/auth/oauth-status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        cache: 'no-cache'
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
       const data = await response.json();
       this.oauthConfigured = data.oauth;
       return this.oauthConfigured;
     } catch (error) {
       console.warn('Could not check OAuth configuration:', error);
-      this.oauthConfigured = { google: { configured: false }, github: { configured: false } };
+      // Return a default configuration indicating OAuth is not available
+      this.oauthConfigured = { 
+        google: { configured: false }, 
+        github: { configured: false } 
+      };
       return this.oauthConfigured;
     }
   }
@@ -153,16 +168,20 @@ class ApiService {
       try {
         const oauthConfig = await this.checkOAuthConfig();
         
-        if (oauthConfig.google.configured) {
+        if (oauthConfig?.google?.configured) {
           // Redirect to backend OAuth endpoint
           window.location.href = `${API_BASE_URL}/auth/google`;
           return;
         }
         
-        // OAuth not configured
-        throw new Error('Google OAuth is not configured on the server');
+        // OAuth not configured or check failed
+        throw new Error('Google OAuth is not available. Please contact support.');
       } catch (error) {
         console.error('Google OAuth error:', error);
+        // Don't re-throw the error for network issues
+        if (error.message.includes('Failed to fetch') || error.message.includes('network error')) {
+          throw new Error('Unable to connect to authentication service. Please try again later.');
+        }
         throw error;
       }
     },
@@ -171,16 +190,20 @@ class ApiService {
       try {
         const oauthConfig = await this.checkOAuthConfig();
         
-        if (oauthConfig.github.configured) {
+        if (oauthConfig?.github?.configured) {
           // Redirect to backend OAuth endpoint
           window.location.href = `${API_BASE_URL}/auth/github`;
           return;
         }
         
-        // OAuth not configured
-        throw new Error('GitHub OAuth is not configured on the server');
+        // OAuth not configured or check failed
+        throw new Error('GitHub OAuth is not available. Please contact support.');
       } catch (error) {
         console.error('GitHub OAuth error:', error);
+        // Don't re-throw the error for network issues
+        if (error.message.includes('Failed to fetch') || error.message.includes('network error')) {
+          throw new Error('Unable to connect to authentication service. Please try again later.');
+        }
         throw error;
       }
     },
