@@ -1,4 +1,4 @@
-import { createContext, useContext, useReducer, useEffect } from 'react';
+import { createContext, useContext, useReducer, useEffect, useCallback, useRef } from 'react';
 import { api } from '@/services/api';
 
 // Initial state
@@ -7,6 +7,7 @@ const initialState = {
   user: null,
   isAuthenticated: false,
   loading: false,
+  oauthPending: false,
   
   // Dashboard data
   dailyChallenge: null,
@@ -16,7 +17,10 @@ const initialState = {
     problemsSolved: 0,
     successRate: 0,
     currentStreak: 0,
-    weeklyProgress: 0
+    weeklyProgress: 0,
+    rank: 0,
+    rating: 0,
+    recentSolves: []
   },
   
   // UI state
@@ -25,7 +29,8 @@ const initialState = {
     auth: false,
     teamDetails: false,
     leaderboard: false,
-    notifications: false
+    notifications: false,
+    leetcodeOnboarding: false
   },
   
   // Error handling
@@ -39,6 +44,7 @@ export const ActionTypes = {
   LOGIN_SUCCESS: 'LOGIN_SUCCESS',
   LOGIN_FAILURE: 'LOGIN_FAILURE',
   LOGOUT: 'LOGOUT',
+  SET_OAUTH_PENDING: 'SET_OAUTH_PENDING',
   
   // Data actions
   FETCH_DATA_START: 'FETCH_DATA_START',
@@ -94,6 +100,12 @@ const appReducer = (state, action) => {
         ...initialState
       };
       
+    case ActionTypes.SET_OAUTH_PENDING:
+      return {
+        ...state,
+        oauthPending: action.payload
+      };
+      
     case ActionTypes.FETCH_DATA_SUCCESS:
       return {
         ...state,
@@ -101,7 +113,7 @@ const appReducer = (state, action) => {
         dailyChallenge: action.payload.dailyChallenge,
         teamMembers: action.payload.teamMembers,
         leaderboard: action.payload.leaderboard,
-        userStats: action.payload.userStats,
+        userStats: { ...state.userStats, ...action.payload.userStats },
         error: null
       };
       
@@ -152,6 +164,110 @@ const AppContext = createContext();
 // Provider component
 export const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(appReducer, initialState);
+  const hasInitializedRef = useRef(false);
+  const hasFetchedDataRef = useRef(false);
+
+  // Memoize the initialization function
+  const initializeAuth = useCallback(async () => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      console.log('🔍 Found existing token, checking if valid...');
+      try {
+        const user = await api.auth.getCurrentUser();
+        console.log('✅ Token is valid, logging in user:', user);
+        dispatch({ type: ActionTypes.LOGIN_SUCCESS, payload: user });
+      } catch (error) {
+        console.log('❌ Token is invalid, removing...');
+        // Clear the token from the api instance and localStorage
+        localStorage.removeItem('authToken');
+        api.token = null;
+      }
+    }
+  }, [dispatch]);
+
+  // Memoize the critical actions to prevent useEffect dependency issues
+  const checkOAuthCallback = useCallback(async () => {
+    try {
+      console.log('🔍 Checking OAuth callback...');
+      const result = api.auth.checkOAuthStatus();
+      console.log('🔍 OAuth status result:', result);
+      
+      // If no OAuth parameters found or already processed, return early
+      if (!result || !result.success) {
+        console.log('❌ No valid OAuth parameters found or already processed');
+        return false;
+      }
+      
+      console.log('✅ OAuth successful, getting user data...');
+      
+      // Verify token was set correctly before proceeding
+      if (!api.token) {
+        console.error('❌ Token not found in API service after OAuth');
+        throw new Error('Authentication token not properly set');
+      }
+      
+      // Token was set, now get user data
+      const user = await api.auth.getCurrentUser();
+      console.log('👤 Current user:', user);
+      
+      // Check if user needs onboarding
+      if (result.needsOnboarding) {
+        console.log('📝 User needs onboarding');
+        // Don't log in yet, let the onboarding modal handle it
+        dispatch({ type: ActionTypes.SET_OAUTH_PENDING, payload: true });
+        return { needsOnboarding: true, user };
+      }
+      
+      console.log('🚀 Logging in user and redirecting to dashboard...');
+      dispatch({ type: ActionTypes.LOGIN_SUCCESS, payload: user });
+      
+      // Add notification using the actions object (will be available after this function is defined)
+      setTimeout(() => {
+        actions.addNotification({
+          type: 'success',
+          message: `Welcome, ${user.displayName || user.name}!`,
+          duration: 5000
+        });
+      }, 0);
+      
+      return { needsOnboarding: false, user };
+    } catch (error) {
+      console.error('❌ OAuth callback error:', error);
+      // Clean up on error
+      sessionStorage.removeItem('processedOAuthToken');
+      sessionStorage.removeItem('oauthCallback');
+      localStorage.removeItem('authToken');
+      api.token = null;
+      
+      // Add notification using the actions object (will be available after this function is defined)
+      setTimeout(() => {
+        actions.addNotification({
+          type: 'error',
+          message: 'OAuth authentication failed. Please try again.',
+          duration: 5000
+        });
+      }, 0);
+      return false;
+    }
+  }, [dispatch]);
+
+  // Memoize fetchDashboardData to prevent dependency issues
+  const fetchDashboardData = useCallback(async () => {
+    // Only fetch if authenticated and not currently loading
+    if (!state.isAuthenticated || state.loading) {
+      console.log('⚠️ Skipping dashboard data fetch - not authenticated or already loading');
+      return;
+    }
+    
+    dispatch({ type: ActionTypes.FETCH_DATA_START });
+    try {
+      const data = await api.dashboard.getData();
+      dispatch({ type: ActionTypes.FETCH_DATA_SUCCESS, payload: data });
+    } catch (error) {
+      console.error('❌ Failed to fetch dashboard data:', error);
+      dispatch({ type: ActionTypes.FETCH_DATA_FAILURE, payload: error.message });
+    }
+  }, [dispatch]); // Remove unstable dependencies
 
   // Actions
   const actions = {
@@ -163,7 +279,7 @@ export const AppProvider = ({ children }) => {
         dispatch({ type: ActionTypes.LOGIN_SUCCESS, payload: user });
         
         // Fetch initial data after login
-        await actions.fetchDashboardData();
+        setTimeout(() => fetchDashboardData(), 100);
         
         actions.addNotification({
           type: 'success',
@@ -204,6 +320,11 @@ export const AppProvider = ({ children }) => {
     logout: () => {
       api.auth.logout();
       dispatch({ type: ActionTypes.LOGOUT });
+      
+      // Clean up OAuth processing flags
+      sessionStorage.removeItem('processedOAuthToken');
+      sessionStorage.removeItem('oauthCallback');
+      
       actions.addNotification({
         type: 'info',
         message: 'You have been logged out.',
@@ -211,18 +332,51 @@ export const AppProvider = ({ children }) => {
       });
     },
 
-    // Data fetching
-    fetchDashboardData: async () => {
-      if (!state.isAuthenticated) return;
-      
-      dispatch({ type: ActionTypes.FETCH_DATA_START });
+    // OAuth actions
+    initiateGoogleAuth: () => {
       try {
-        const data = await api.dashboard.getData();
-        dispatch({ type: ActionTypes.FETCH_DATA_SUCCESS, payload: data });
+        api.auth.initiateGoogleAuth();
       } catch (error) {
-        dispatch({ type: ActionTypes.FETCH_DATA_FAILURE, payload: error.message });
+        actions.addNotification({
+          type: 'error',
+          message: 'Google authentication is not available.',
+          duration: 5000
+        });
       }
     },
+
+    initiateGitHubAuth: () => {
+      try {
+        api.auth.initiateGitHubAuth();
+      } catch (error) {
+        actions.addNotification({
+          type: 'error',
+          message: 'GitHub authentication is not available.',
+          duration: 5000
+        });
+      }
+    },
+
+    // Check for OAuth callback
+    checkOAuthCallback,
+
+    // Complete OAuth onboarding
+    completeOAuthOnboarding: async (user) => {
+      dispatch({ type: ActionTypes.LOGIN_SUCCESS, payload: user });
+      dispatch({ type: ActionTypes.SET_OAUTH_PENDING, payload: false });
+      
+      actions.addNotification({
+        type: 'success',
+        message: `Welcome to CodeBattle, ${user.displayName}!`,
+        duration: 5000
+      });
+      
+      // Fetch dashboard data
+      setTimeout(() => fetchDashboardData(), 100);
+    },
+
+    // Data fetching
+    fetchDashboardData,
 
     // LeetCode sync
     syncLeetCode: async () => {
@@ -279,15 +433,77 @@ export const AppProvider = ({ children }) => {
       dispatch({ type: ActionTypes.REMOVE_NOTIFICATION, payload: id });
     },
 
+    // Initialize authentication state
+    initializeAuth: initializeAuth,
+
     clearError: () => {
       dispatch({ type: ActionTypes.CLEAR_ERROR });
     }
   };
 
-  // Auto-fetch data on mount if authenticated
+  // Initialize authentication state on mount - run only once
   useEffect(() => {
-    if (state.isAuthenticated) {
-      actions.fetchDashboardData();
+    if (hasInitializedRef.current) return;
+    
+    let isMounted = true;
+    hasInitializedRef.current = true;
+    
+    const initAuth = async () => {
+      if (!isMounted) return;
+      
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        console.log('🔍 Found existing token, checking if valid...');
+        // Set token in API service first
+        api.setToken(token);
+        try {
+          const user = await api.auth.getCurrentUser();
+          console.log('✅ Token is valid, logging in user:', user);
+          if (isMounted) {
+            dispatch({ type: ActionTypes.LOGIN_SUCCESS, payload: user });
+          }
+        } catch (error) {
+          console.log('❌ Token is invalid, removing...', error);
+          // Clear the token from the api instance and localStorage
+          localStorage.removeItem('authToken');
+          api.token = null;
+        }
+      } else {
+        console.log('ℹ️ No existing token found');
+      }
+    };
+    
+    initAuth();
+    
+    return () => {
+      isMounted = false;
+    };
+  }, []); // Empty dependency array - run only once
+
+  // Auto-fetch data when user becomes authenticated (only once per authentication)
+  useEffect(() => {
+    if (!state.isAuthenticated || hasFetchedDataRef.current || state.loading) {
+      return;
+    }
+    
+    console.log('🔄 User authenticated, fetching dashboard data...');
+    hasFetchedDataRef.current = true;
+    
+    // Use a timeout to avoid dependency issues
+    const timeoutId = setTimeout(() => {
+      fetchDashboardData().catch(error => {
+        console.error('Failed to fetch dashboard data:', error);
+        hasFetchedDataRef.current = false; // Reset on error so it can be retried
+      });
+    }, 100);
+
+    return () => clearTimeout(timeoutId);
+  }, [state.isAuthenticated, state.loading]);
+
+  // Reset fetch flag when user logs out
+  useEffect(() => {
+    if (!state.isAuthenticated) {
+      hasFetchedDataRef.current = false;
     }
   }, [state.isAuthenticated]);
 

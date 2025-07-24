@@ -1,15 +1,10 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const passport = require('passport');
 const User = require('../models/User');
-const mockDB = require('../utils/mockDB');
 const mongoose = require('mongoose');
 const router = express.Router();
-
-// Helper function to check if MongoDB is connected
-const isMongoConnected = () => {
-  return mongoose.connection.readyState === 1;
-};
 
 // @route   POST /api/auth/register
 // @desc    Register a new user
@@ -18,87 +13,45 @@ router.post('/register', async (req, res) => {
   try {
     const { leetcodeUsername, displayName, email, password } = req.body;
 
-    if (isMongoConnected()) {
-      // Use MongoDB
-      const existingUser = await User.findOne({
-        $or: [{ email }, { leetcodeUsername }]
-      });
+    // Check if user already exists
+    const existingUser = await User.findOne({
+      $or: [{ email }, { leetcodeUsername }]
+    });
 
-      if (existingUser) {
-        return res.status(400).json({
-          message: 'User already exists with this email or LeetCode username'
-        });
-      }
-
-      const user = new User({
-        leetcodeUsername,
-        displayName,
-        email,
-        password
-      });
-
-      await user.save();
-
-      const token = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      res.status(201).json({
-        message: 'User registered successfully',
-        token,
-        user: {
-          id: user._id,
-          leetcodeUsername: user.leetcodeUsername,
-          displayName: user.displayName,
-          email: user.email,
-          skillLevel: user.skillLevel,
-          totalScore: user.totalScore,
-          streak: user.streak
-        }
-      });
-    } else {
-      // Use Mock Database
-      const existingUser = mockDB.findUserByEmail(email) || mockDB.findUserByLeetcodeUsername(leetcodeUsername);
-
-      if (existingUser) {
-        return res.status(400).json({
-          message: 'User already exists with this email or LeetCode username'
-        });
-      }
-
-      // Hash password
-      const salt = await bcrypt.genSalt(10);
-      const hashedPassword = await bcrypt.hash(password, salt);
-
-      const user = mockDB.createUser({
-        leetcodeUsername,
-        displayName,
-        email,
-        password: hashedPassword
-      });
-
-      const token = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      res.status(201).json({
-        message: 'User registered successfully',
-        token,
-        user: {
-          id: user._id,
-          leetcodeUsername: user.leetcodeUsername,
-          displayName: user.displayName,
-          email: user.email,
-          skillLevel: user.skillLevel,
-          totalScore: user.totalScore,
-          streak: user.streak
-        }
+    if (existingUser) {
+      return res.status(400).json({
+        message: 'User already exists with this email or LeetCode username'
       });
     }
+
+    const user = new User({
+      leetcodeUsername,
+      displayName,
+      email,
+      password
+    });
+
+    await user.save();
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.status(201).json({
+      message: 'User registered successfully',
+      token,
+      user: {
+        id: user._id,
+        leetcodeUsername: user.leetcodeUsername,
+        displayName: user.displayName,
+        email: user.email,
+        skillLevel: user.skillLevel,
+        totalScore: user.totalScore,
+        streak: user.streak
+      }
+    });
   } catch (error) {
     console.error('Registration error:', error);
     res.status(500).json({ message: 'Server error during registration' });
@@ -112,90 +65,283 @@ router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    if (isMongoConnected()) {
-      // Use MongoDB
-      const user = await User.findOne({ email }).populate('teamId');
+    const user = await User.findOne({ email }).populate('teamId');
 
-      if (!user) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-      }
-
-      const isMatch = await user.comparePassword(password);
-
-      if (!isMatch) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-      }
-
-      user.lastActive = new Date();
-      await user.save();
-
-      const token = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      res.json({
-        message: 'Login successful',
-        token,
-        user: {
-          id: user._id,
-          leetcodeUsername: user.leetcodeUsername,
-          displayName: user.displayName,
-          email: user.email,
-          skillLevel: user.skillLevel,
-          totalScore: user.totalScore,
-          streak: user.streak,
-          team: user.teamId
-        }
-      });
-    } else {
-      // Use Mock Database
-      const user = mockDB.findUserByEmail(email);
-
-      if (!user) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-      }
-
-      // For demo purposes, allow 'demo' as password or check hashed password
-      let isMatch = false;
-      if (password === 'demo' && email === 'demo@codebattle.com') {
-        isMatch = true;
-      } else {
-        isMatch = await bcrypt.compare(password, user.password);
-      }
-
-      if (!isMatch) {
-        return res.status(400).json({ message: 'Invalid credentials' });
-      }
-
-      // Update last active
-      mockDB.updateUser(user._id, { lastActive: new Date() });
-
-      const token = jwt.sign(
-        { userId: user._id },
-        process.env.JWT_SECRET,
-        { expiresIn: '7d' }
-      );
-
-      res.json({
-        message: 'Login successful',
-        token,
-        user: {
-          id: user._id,
-          leetcodeUsername: user.leetcodeUsername,
-          displayName: user.displayName,
-          email: user.email,
-          skillLevel: user.skillLevel,
-          totalScore: user.totalScore,
-          streak: user.streak,
-          team: user.teamId
-        }
-      });
+    if (!user) {
+      return res.status(400).json({ message: 'Invalid credentials' });
     }
+
+    const isMatch = await user.comparePassword(password);
+
+    if (!isMatch) {
+      return res.status(400).json({ message: 'Invalid credentials' });
+    }
+
+    user.lastActive = new Date();
+    await user.save();
+
+    const token = jwt.sign(
+      { userId: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
+    res.json({
+      message: 'Login successful',
+      token,
+      user: {
+        id: user._id,
+        leetcodeUsername: user.leetcodeUsername,
+        displayName: user.displayName,
+        email: user.email,
+        skillLevel: user.skillLevel,
+        totalScore: user.totalScore,
+        streak: user.streak,
+        team: user.teamId
+      }
+    });
   } catch (error) {
     console.error('Login error:', error);
     res.status(500).json({ message: 'Server error during login' });
+  }
+});
+
+// @route   GET /api/auth/me
+// @desc    Get current user
+// @access  Private
+router.get('/me', async (req, res) => {
+  try {
+    const token = req.header('Authorization')?.replace('Bearer ', '');
+    
+    if (!token) {
+      return res.status(401).json({ message: 'No token provided' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    const user = await User.findById(decoded.userId).populate('teamId');
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    res.json({
+      id: user._id,
+      leetcodeUsername: user.leetcodeUsername,
+      displayName: user.displayName,
+      email: user.email,
+      skillLevel: user.skillLevel,
+      totalScore: user.totalScore,
+      streak: user.streak,
+      team: user.teamId,
+      isOAuthUser: user.isOAuthUser || false,
+      onboardingCompleted: user.onboardingCompleted || false
+    });
+  } catch (error) {
+    console.error('Get current user error:', error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// OAuth Routes
+
+// @route   GET /api/auth/oauth-status
+// @desc    Check OAuth configuration status
+// @access  Public
+router.get('/oauth-status', (req, res) => {
+  const googleConfigured = process.env.GOOGLE_CLIENT_ID && 
+                           process.env.GOOGLE_CLIENT_SECRET && 
+                           process.env.GOOGLE_CLIENT_ID !== 'your-google-client-id';
+  
+  const githubConfigured = process.env.GITHUB_CLIENT_ID && 
+                          process.env.GITHUB_CLIENT_SECRET && 
+                          process.env.GITHUB_CLIENT_ID !== 'your-github-client-id';
+
+  res.json({
+    oauth: {
+      google: {
+        configured: googleConfigured,
+        clientId: googleConfigured ? `${process.env.GOOGLE_CLIENT_ID.substring(0, 12)}...` : 'Not configured'
+      },
+      github: {
+        configured: githubConfigured,
+        clientId: githubConfigured ? `${process.env.GITHUB_CLIENT_ID.substring(0, 12)}...` : 'Not configured'
+      }
+    },
+    environment: process.env.NODE_ENV,
+    frontendUrl: process.env.FRONTEND_URL
+  });
+});
+
+// @route   GET /api/auth/google
+// @desc    Initiate Google OAuth
+// @access  Public
+router.get('/google', (req, res, next) => {
+  console.log('🔵 Google OAuth initiated');
+  console.log('🔵 Client ID:', process.env.GOOGLE_CLIENT_ID?.substring(0, 20) + '...');
+  console.log('🔵 Callback URL:', process.env.GOOGLE_REDIRECT_URI);
+  
+  if (!process.env.GOOGLE_CLIENT_ID || !process.env.GOOGLE_CLIENT_SECRET) {
+    console.log('❌ Google OAuth not configured');
+    return res.status(503).json({ 
+      message: 'Google OAuth not configured',
+      error: 'OAUTH_NOT_CONFIGURED'
+    });
+  }
+  
+  passport.authenticate('google', {
+    scope: ['profile', 'email']
+  })(req, res, next);
+});
+
+// @route   GET /api/auth/google/callback
+// @desc    Google OAuth callback
+// @access  Public
+router.get('/google/callback', 
+  passport.authenticate('google', { failureRedirect: '/login' }),
+  async (req, res) => {
+    try {
+      // Generate JWT token for the authenticated user
+      const token = jwt.sign(
+        { userId: req.user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      // Check if user needs onboarding (OAuth users without LeetCode username)
+      const needsOnboarding = req.user.needsOnboarding 
+        ? req.user.needsOnboarding() 
+        : (req.user.isOAuthUser && (!req.user.leetcodeUsername || !req.user.onboardingCompleted));
+      
+      const redirectUrl = needsOnboarding 
+        ? `${process.env.FRONTEND_URL}/onboarding?token=${token}&oauth=true`
+        : `${process.env.FRONTEND_URL}/dashboard?token=${token}&oauth=true`;
+
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('Google OAuth callback error:', error);
+      res.redirect(`${process.env.FRONTEND_URL}/?error=oauth_failed`);
+    }
+  }
+);
+
+// @route   GET /api/auth/github
+// @desc    Initiate GitHub OAuth
+// @access  Public
+router.get('/github', (req, res, next) => {
+  if (!process.env.GITHUB_CLIENT_ID || !process.env.GITHUB_CLIENT_SECRET) {
+    return res.status(503).json({ 
+      message: 'GitHub OAuth not configured',
+      error: 'OAUTH_NOT_CONFIGURED'
+    });
+  }
+  passport.authenticate('github', {
+    scope: ['user:email']
+  })(req, res, next);
+});
+
+// @route   GET /api/auth/github/callback
+// @desc    GitHub OAuth callback
+// @access  Public
+router.get('/github/callback',
+  passport.authenticate('github', { failureRedirect: '/login' }),
+  async (req, res) => {
+    try {
+      // Generate JWT token for the authenticated user
+      const token = jwt.sign(
+        { userId: req.user._id },
+        process.env.JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+
+      // Check if user needs onboarding (OAuth users without LeetCode username)
+      const needsOnboarding = req.user.needsOnboarding 
+        ? req.user.needsOnboarding() 
+        : (req.user.isOAuthUser && (!req.user.leetcodeUsername || !req.user.onboardingCompleted));
+      
+      const redirectUrl = needsOnboarding 
+        ? `${process.env.FRONTEND_URL}/onboarding?token=${token}&oauth=true`
+        : `${process.env.FRONTEND_URL}/dashboard?token=${token}&oauth=true`;
+
+      res.redirect(redirectUrl);
+    } catch (error) {
+      console.error('GitHub OAuth callback error:', error);
+      res.redirect(`${process.env.FRONTEND_URL}/?error=oauth_failed`);
+    }
+  }
+);
+
+// @route   POST /api/auth/complete-onboarding
+// @desc    Complete OAuth user onboarding
+// @access  Private
+router.post('/complete-onboarding', async (req, res) => {
+  try {
+    const { leetcodeUsername, token } = req.body;
+
+    if (!token || !leetcodeUsername) {
+      return res.status(400).json({ 
+        message: 'Token and LeetCode username are required' 
+      });
+    }
+
+    // Verify token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    
+    const user = await User.findById(decoded.userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (!user.isOAuthUser) {
+      return res.status(400).json({ message: 'User is not an OAuth user' });
+    }
+
+    // Check if LeetCode username is already taken
+    const existingUser = await User.findOne({ 
+      leetcodeUsername, 
+      _id: { $ne: user._id } 
+    });
+
+    if (existingUser) {
+      return res.status(400).json({ 
+        message: 'LeetCode username already taken' 
+      });
+    }
+
+    // Update user with LeetCode username and mark onboarding complete
+    const updates = {
+      leetcodeUsername,
+      onboardingCompleted: true,
+      lastActive: new Date()
+    };
+
+    await User.findByIdAndUpdate(user._id, updates);
+    const updatedUser = await User.findById(user._id);
+
+    res.json({
+      message: 'Onboarding completed successfully',
+      user: {
+        id: updatedUser._id,
+        leetcodeUsername: updatedUser.leetcodeUsername,
+        displayName: updatedUser.displayName,
+        email: updatedUser.email,
+        skillLevel: updatedUser.skillLevel,
+        totalScore: updatedUser.totalScore,
+        streak: updatedUser.streak,
+        isOAuthUser: updatedUser.isOAuthUser,
+        onboardingCompleted: updatedUser.onboardingCompleted
+      }
+    });
+  } catch (error) {
+    console.error('Complete onboarding error:', error);
+    if (error.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: 'Invalid token' });
+    }
+    res.status(500).json({ message: 'Server error during onboarding' });
   }
 });
 

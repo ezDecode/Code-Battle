@@ -2,14 +2,7 @@ const express = require('express');
 const leetcodeService = require('../services/leetcodeService');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
-const mockDB = require('../utils/mockDB');
-const mongoose = require('mongoose');
 const router = express.Router();
-
-// Helper function to check if MongoDB is connected
-const isMongoConnected = () => {
-  return mongoose.connection.readyState === 1;
-};
 
 // @route   GET /api/leetcode/verify/:username
 // @desc    Verify if a LeetCode username exists
@@ -75,13 +68,7 @@ router.get('/profile/:username', auth, async (req, res) => {
 // @access  Private
 router.post('/sync', auth, async (req, res) => {
   try {
-    let user;
-    
-    if (isMongoConnected()) {
-      user = await User.findById(req.userId);
-    } else {
-      user = mockDB.findUserById(req.userId);
-    }
+    const user = await User.findById(req.userId);
     
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
@@ -118,24 +105,19 @@ router.post('/sync', auth, async (req, res) => {
       lastActive: new Date()
     };
     
-    if (isMongoConnected()) {
-      await User.findByIdAndUpdate(req.userId, updates);
-      user = await User.findById(req.userId);
-    } else {
-      mockDB.updateUser(req.userId, updates);
-      user = mockDB.findUserById(req.userId);
-    }
+    await User.findByIdAndUpdate(req.userId, updates);
+    const updatedUser = await User.findById(req.userId);
     
     res.json({
       success: true,
       message: 'LeetCode data synced successfully',
       user: {
-        id: user._id,
-        displayName: user.displayName,
-        leetcodeUsername: user.leetcodeUsername,
-        skillLevel: user.skillLevel,
-        totalScore: user.totalScore,
-        leetcodeData: user.leetcodeData
+        id: updatedUser._id,
+        displayName: updatedUser.displayName,
+        leetcodeUsername: updatedUser.leetcodeUsername,
+        skillLevel: updatedUser.skillLevel,
+        totalScore: updatedUser.totalScore,
+        leetcodeData: updatedUser.leetcodeData
       },
       syncedData: {
         totalSolved: leetcodeData.solvedStats.totalSolved,

@@ -3,6 +3,7 @@ const axios = require('axios');
 class LeetCodeService {
   constructor() {
     this.baseURL = 'https://alfa-leetcode-api.onrender.com';
+    this.fallbackURL = 'https://leetcode-api-faisalshohag.vercel.app';
     this.rateLimitDelay = 1000; // 1 second between requests
     this.lastRequestTime = 0;
   }
@@ -20,21 +21,39 @@ class LeetCodeService {
     this.lastRequestTime = Date.now();
   }
 
-  // Make API request with error handling
-  async makeRequest(endpoint) {
+  // Make API request with error handling and fallback
+  async makeRequest(endpoint, useFallback = false) {
     try {
       await this.waitForRateLimit();
       
-      const response = await axios.get(`${this.baseURL}${endpoint}`, {
+      const baseUrl = useFallback ? this.fallbackURL : this.baseURL;
+      const response = await axios.get(`${baseUrl}${endpoint}`, {
         timeout: 10000, // 10 second timeout
         headers: {
           'User-Agent': 'CodeBattle-App/1.0'
         }
       });
       
+      // Check if response contains rate limit message
+      if (typeof response.data === 'string' && response.data.includes('Too many request')) {
+        throw new Error('Rate limited');
+      }
+      
       return response.data;
     } catch (error) {
       console.error(`LeetCode API Error for ${endpoint}:`, error.message);
+      
+      // If primary API fails and we haven't tried fallback yet, try fallback
+      if (!useFallback && (
+        error.response?.status === 429 || 
+        error.message.includes('Too many request') ||
+        error.message.includes('Rate limited') ||
+        error.message.includes('rate limit') ||
+        error.code === 'ECONNABORTED'
+      )) {
+        console.log('Primary API failed, trying fallback API...');
+        return this.makeRequest(endpoint, true);
+      }
       
       if (error.response) {
         // API returned an error response
@@ -50,25 +69,52 @@ class LeetCodeService {
   }
 
   // Get user profile information
-  async getUserProfile(username) {
-    const data = await this.makeRequest(`/${username}`);
+  async getUserProfile(username, useFallback = false) {
+    const data = await this.makeRequest(`/${username}`, useFallback);
     
-    return {
-      username: data.username,
-      name: data.name,
-      avatar: data.avatar,
-      ranking: data.ranking,
-      reputation: data.reputation,
-      country: data.country,
-      company: data.company,
-      school: data.school,
-      skillTags: data.skillTags || [],
-      about: data.about,
-      github: data.gitHub,
-      linkedin: data.linkedIN,
-      twitter: data.twitter,
-      website: data.website
-    };
+    // Handle different response formats between APIs
+    if (useFallback || data.totalSolved !== undefined) {
+      // Fallback API format
+      return {
+        username: username,
+        name: username, // Fallback API doesn't provide name
+        avatar: null,
+        ranking: data.ranking || 0,
+        reputation: data.reputation || 0,
+        country: null,
+        company: null,
+        school: null,
+        skillTags: [],
+        about: null,
+        github: null,
+        linkedin: null,
+        twitter: null,
+        website: null,
+        // Additional data from fallback API
+        totalSolved: data.totalSolved,
+        easySolved: data.easySolved,
+        mediumSolved: data.mediumSolved,
+        hardSolved: data.hardSolved
+      };
+    } else {
+      // Primary API format
+      return {
+        username: data.username,
+        name: data.name,
+        avatar: data.avatar,
+        ranking: data.ranking,
+        reputation: data.reputation,
+        country: data.country,
+        company: data.company,
+        school: data.school,
+        skillTags: data.skillTags || [],
+        about: data.about,
+        github: data.gitHub,
+        linkedin: data.linkedIN,
+        twitter: data.twitter,
+        website: data.website
+      };
+    }
   }
 
   // Get user's solved problems statistics
@@ -220,9 +266,23 @@ class LeetCodeService {
   // Verify if a LeetCode username exists
   async verifyUsername(username) {
     try {
-      await this.getUserProfile(username);
-      return true;
+      console.log(`Verifying LeetCode username: ${username}`);
+      
+      // Try primary API first
+      try {
+        await this.getUserProfile(username, false);
+        console.log(`Username ${username} verified with primary API`);
+        return true;
+      } catch (primaryError) {
+        console.log(`Primary API failed for ${username}, trying fallback...`);
+        
+        // Try fallback API
+        await this.getUserProfile(username, true);
+        console.log(`Username ${username} verified with fallback API`);
+        return true;
+      }
     } catch (error) {
+      console.log(`Username ${username} not found in either API`);
       return false;
     }
   }
