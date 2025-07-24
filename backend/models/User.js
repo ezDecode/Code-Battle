@@ -71,6 +71,11 @@ const userSchema = new mongoose.Schema({
   },
   
   // LeetCode integration
+  submitStats: {
+    easy: { type: Number, default: 0 },
+    medium: { type: Number, default: 0 },
+    hard: { type: Number, default: 0 }
+  },
   leetcodeData: {
     ranking: Number,
     userAvatar: String,
@@ -79,7 +84,11 @@ const userSchema = new mongoose.Schema({
       easy: { type: Number, default: 0 },
       medium: { type: Number, default: 0 },
       hard: { type: Number, default: 0 }
-    }
+    },
+    totalSolved: { type: Number, default: 0 },
+    contestInfo: mongoose.Schema.Types.Mixed,
+    streak: { type: Number, default: 0 },
+    lastSyncAt: Date
   },
   
   // OAuth completion tracking

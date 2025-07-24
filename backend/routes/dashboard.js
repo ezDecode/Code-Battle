@@ -1,6 +1,6 @@
 const express = require('express');
 const auth = require('../middleware/auth');
-const leetcodeService = require('../services/leetcodeService');
+const leetcodeService = require('../services/leetcodeQueryService');
 const router = express.Router();
 
 // @route   GET /api/dashboard
@@ -25,16 +25,38 @@ router.get('/', auth, async (req, res) => {
       recentSolves: [] // TODO: Get from LeetCode API recent submissions
     };
 
-    // Get dashboard data
-    const dashboardData = {
-      dailyChallenge: {
+    // Fetch today's LeetCode daily challenge
+    let dailyChallenge = null;
+    try {
+      const dailyProblem = await leetcodeService.getDailyProblem();
+      dailyChallenge = {
+        id: dailyProblem.question.titleSlug,
+        title: dailyProblem.question.title,
+        difficulty: dailyProblem.question.difficulty,
+        description: dailyProblem.question.content?.replace(/<[^>]*>/g, '').substring(0, 200) + '...', // Strip HTML and truncate
+        link: dailyProblem.link,
+        date: dailyProblem.date,
+        topicTags: dailyProblem.question.topicTags || [],
+        completed: false, // TODO: Check if user has solved this problem
+        points: dailyProblem.question.difficulty === 'Easy' ? 100 : 
+                dailyProblem.question.difficulty === 'Medium' ? 200 : 300
+      };
+    } catch (error) {
+      console.error('Failed to fetch daily LeetCode problem:', error);
+      // Fallback to default challenge
+      dailyChallenge = {
         id: 1,
         title: "Two Sum",
         difficulty: "Easy",
         description: "Given an array of integers nums and an integer target, return indices of the two numbers such that they add up to target.",
         completed: false,
         points: 100
-      },
+      };
+    }
+
+    // Get dashboard data
+    const dashboardData = {
+      dailyChallenge,
       teamMembers: [],
       leaderboard: [
         {

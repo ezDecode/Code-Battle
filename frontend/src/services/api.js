@@ -367,22 +367,77 @@ class ApiService {
 
   // Teams API
   teams = {
+    // Get all public teams
+    getAll: async () => {
+      return await this.request('/teams');
+    },
+
+    // Get specific team details
+    getById: async (teamId) => {
+      return await this.request(`/teams/${teamId}`);
+    },
+
+    // Get current user's team members
     getMembers: async () => {
       return await this.request('/teams/members');
     },
 
-    join: async (teamCode) => {
-      return await this.request('/teams/join', {
-        method: 'POST',
-        body: JSON.stringify({ teamCode }),
-      });
-    },
-
+    // Create a new team
     create: async (teamData) => {
-      return await this.request('/teams/create', {
+      return await this.request('/teams', {
         method: 'POST',
         body: JSON.stringify(teamData),
       });
+    },
+
+    // Update team details (captain only)
+    update: async (teamId, teamData) => {
+      return await this.request(`/teams/${teamId}`, {
+        method: 'PUT',
+        body: JSON.stringify(teamData),
+      });
+    },
+
+    // Delete team (captain only)
+    delete: async (teamId) => {
+      return await this.request(`/teams/${teamId}`, {
+        method: 'DELETE',
+      });
+    },
+
+    // Join a team
+    join: async (teamId) => {
+      return await this.request(`/teams/join/${teamId}`, {
+        method: 'POST',
+      });
+    },
+
+    // Leave current team
+    leave: async () => {
+      return await this.request('/teams/leave', {
+        method: 'POST',
+      });
+    },
+
+    // Invite member by LeetCode username
+    inviteMember: async (teamId, leetcodeUsername) => {
+      return await this.request(`/teams/${teamId}/invite`, {
+        method: 'POST',
+        body: JSON.stringify({ leetcodeUsername }),
+      });
+    },
+
+    // Remove member from team (captain only)
+    removeMember: async (teamId, memberId) => {
+      return await this.request(`/teams/${teamId}/remove-member`, {
+        method: 'POST',
+        body: JSON.stringify({ memberId }),
+      });
+    },
+
+    // Check if team name is available
+    checkNameAvailability: async (name) => {
+      return await this.request(`/teams/check-name/${encodeURIComponent(name)}`);
     }
   };
 

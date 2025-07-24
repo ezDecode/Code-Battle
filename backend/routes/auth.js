@@ -24,12 +24,64 @@ router.post('/register', async (req, res) => {
       });
     }
 
+    // If LeetCode username is provided, verify it exists and fetch data
+    let leetcodeData = null;
+    let skillLevel = 'beginner';
+    let submitStats = { easy: 0, medium: 0, hard: 0 };
+    let streak = 0;
+
+    if (leetcodeUsername) {
+      try {
+        const leetcodeService = require('../services/leetcodeQueryService');
+        
+        console.log(`Verifying and syncing LeetCode data for: ${leetcodeUsername}`);
+        
+        // Verify username exists
+        const isValidUsername = await leetcodeService.verifyUsername(leetcodeUsername);
+        if (!isValidUsername) {
+          return res.status(400).json({ 
+            message: 'LeetCode username not found' 
+          });
+        }
+
+        // Fetch comprehensive LeetCode data
+        leetcodeData = await leetcodeService.getComprehensiveUserData(leetcodeUsername);
+        skillLevel = leetcodeData.skillLevel;
+        submitStats = {
+          easy: leetcodeData.solvedStats.easySolved,
+          medium: leetcodeData.solvedStats.mediumSolved,
+          hard: leetcodeData.solvedStats.hardSolved
+        };
+        streak = leetcodeData.calendar.streak || 0;
+      } catch (syncError) {
+        console.error('LeetCode sync error during registration:', syncError);
+        // Continue with registration even if sync fails
+      }
+    }
+
     const user = new User({
       leetcodeUsername,
       displayName,
       email,
-      password
+      password,
+      skillLevel,
+      submitStats,
+      streak
     });
+
+    // Add LeetCode data if successfully fetched
+    if (leetcodeData) {
+      user.leetcodeData = {
+        ranking: leetcodeData.profile.ranking,
+        userAvatar: leetcodeData.profile.avatar,
+        realName: leetcodeData.profile.name,
+        submitStats,
+        totalSolved: leetcodeData.solvedStats.totalSolved,
+        contestInfo: leetcodeData.contestInfo,
+        streak: leetcodeData.calendar.streak || 0,
+        lastSyncAt: new Date()
+      };
+    }
 
     await user.save();
 
@@ -49,8 +101,16 @@ router.post('/register', async (req, res) => {
         email: user.email,
         skillLevel: user.skillLevel,
         totalScore: user.totalScore,
-        streak: user.streak
-      }
+        streak: user.streak,
+        submitStats: user.submitStats,
+        leetcodeData: user.leetcodeData
+      },
+      syncedData: leetcodeData ? {
+        totalSolved: leetcodeData.solvedStats.totalSolved,
+        skillLevel: leetcodeData.skillLevel,
+        ranking: leetcodeData.profile.ranking,
+        streak: leetcodeData.calendar.streak || 0
+      } : null
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -135,7 +195,10 @@ router.get('/me', async (req, res) => {
       streak: user.streak,
       team: user.teamId,
       isOAuthUser: user.isOAuthUser || false,
-      onboardingCompleted: user.onboardingCompleted || false
+      onboardingCompleted: user.onboardingCompleted || false,
+      avatar: user.avatar,
+      leetcodeData: user.leetcodeData,
+      submitStats: user.submitStats
     });
   } catch (error) {
     console.error('Get current user error:', error);
@@ -312,12 +375,60 @@ router.post('/complete-onboarding', async (req, res) => {
       });
     }
 
-    // Update user with LeetCode username and mark onboarding complete
+    // Verify LeetCode username exists and fetch initial data
+    const leetcodeService = require('../services/leetcodeQueryService');
+    
+    console.log(`Verifying and syncing LeetCode data for: ${leetcodeUsername}`);
+    
+    // Verify username exists
+    const isValidUsername = await leetcodeService.verifyUsername(leetcodeUsername);
+    if (!isValidUsername) {
+      return res.status(400).json({ 
+        message: 'LeetCode username not found' 
+      });
+    }
+
+    // Fetch comprehensive LeetCode data
+    let leetcodeData = null;
+    let skillLevel = 'beginner';
+    let submitStats = { easy: 0, medium: 0, hard: 0 };
+    
+    try {
+      leetcodeData = await leetcodeService.getComprehensiveUserData(leetcodeUsername);
+      skillLevel = leetcodeData.skillLevel;
+      submitStats = {
+        easy: leetcodeData.solvedStats.easySolved,
+        medium: leetcodeData.solvedStats.mediumSolved,
+        hard: leetcodeData.solvedStats.hardSolved
+      };
+    } catch (syncError) {
+      console.error('LeetCode sync error during onboarding:', syncError);
+      // Continue with onboarding even if sync fails
+    }
+
+    // Update user with LeetCode username, mark onboarding complete, and sync data
     const updates = {
       leetcodeUsername,
       onboardingCompleted: true,
+      skillLevel,
+      submitStats,
       lastActive: new Date()
     };
+
+    // Add LeetCode data if successfully fetched
+    if (leetcodeData) {
+      updates.leetcodeData = {
+        ranking: leetcodeData.profile.ranking,
+        userAvatar: leetcodeData.profile.avatar,
+        realName: leetcodeData.profile.name,
+        submitStats,
+        totalSolved: leetcodeData.solvedStats.totalSolved,
+        contestInfo: leetcodeData.contestInfo,
+        streak: leetcodeData.calendar.streak || 0,
+        lastSyncAt: new Date()
+      };
+      updates.streak = leetcodeData.calendar.streak || 0;
+    }
 
     await User.findByIdAndUpdate(user._id, updates);
     const updatedUser = await User.findById(user._id);
@@ -332,9 +443,17 @@ router.post('/complete-onboarding', async (req, res) => {
         skillLevel: updatedUser.skillLevel,
         totalScore: updatedUser.totalScore,
         streak: updatedUser.streak,
+        submitStats: updatedUser.submitStats,
+        leetcodeData: updatedUser.leetcodeData,
         isOAuthUser: updatedUser.isOAuthUser,
         onboardingCompleted: updatedUser.onboardingCompleted
-      }
+      },
+      syncedData: leetcodeData ? {
+        totalSolved: leetcodeData.solvedStats.totalSolved,
+        skillLevel: leetcodeData.skillLevel,
+        ranking: leetcodeData.profile.ranking,
+        streak: leetcodeData.calendar.streak || 0
+      } : null
     });
   } catch (error) {
     console.error('Complete onboarding error:', error);

@@ -1,5 +1,5 @@
 const express = require('express');
-const leetcodeService = require('../services/leetcodeService');
+const leetcodeService = require('../services/leetcodeQueryService');
 const auth = require('../middleware/auth');
 const User = require('../models/User');
 const router = express.Router();
@@ -11,21 +11,37 @@ router.get('/verify/:username', async (req, res) => {
   try {
     const { username } = req.params;
     
+    console.log(`Verifying LeetCode username: ${username}`);
+    
     const isValid = await leetcodeService.verifyUsername(username);
     
     if (isValid) {
-      // Get basic profile data
-      const profile = await leetcodeService.getUserProfile(username);
-      
-      res.json({
-        valid: true,
-        profile: {
-          username: profile.username,
-          name: profile.name,
-          avatar: profile.avatar,
-          ranking: profile.ranking
-        }
-      });
+      // Get basic profile data using the comprehensive method
+      try {
+        const userData = await leetcodeService.getComprehensiveUserData(username);
+        
+        res.json({
+          valid: true,
+          profile: {
+            username: userData.profile.username,
+            name: userData.profile.name,
+            avatar: userData.profile.avatar,
+            ranking: userData.profile.ranking
+          }
+        });
+      } catch (profileError) {
+        console.log('Profile fetch failed, but username is valid:', profileError.message);
+        // Username is valid but profile fetch failed, still return success
+        res.json({
+          valid: true,
+          profile: {
+            username: username,
+            name: username,
+            avatar: null,
+            ranking: null
+          }
+        });
+      }
     } else {
       res.status(404).json({
         valid: false,
@@ -36,7 +52,8 @@ router.get('/verify/:username', async (req, res) => {
     console.error('LeetCode verification error:', error);
     res.status(500).json({
       valid: false,
-      message: 'Error verifying LeetCode username'
+      message: 'Error verifying LeetCode username',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
@@ -131,6 +148,112 @@ router.post('/sync', auth, async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to sync LeetCode data'
+    });
+  }
+});
+
+// @route   POST /api/leetcode/sync-all
+// @desc    Sync all users' LeetCode data (Admin only)
+// @access  Private
+router.post('/sync-all', auth, async (req, res) => {
+  try {
+    // Find all users with LeetCode usernames
+    const users = await User.find({
+      leetcodeUsername: { $exists: true, $ne: null }
+    });
+
+    if (users.length === 0) {
+      return res.json({
+        success: true,
+        message: 'No users found with LeetCode usernames',
+        syncedUsers: []
+      });
+    }
+
+    const syncResults = [];
+    let successCount = 0;
+    let errorCount = 0;
+
+    for (const user of users) {
+      try {
+        console.log(`Syncing LeetCode data for user: ${user.displayName} (${user.leetcodeUsername})`);
+        
+        // Fetch comprehensive LeetCode data
+        const leetcodeData = await leetcodeService.getComprehensiveUserData(user.leetcodeUsername);
+        
+        // Update user's skill level and LeetCode data
+        const updates = {
+          skillLevel: leetcodeData.skillLevel,
+          submitStats: {
+            easy: leetcodeData.solvedStats.easySolved,
+            medium: leetcodeData.solvedStats.mediumSolved,
+            hard: leetcodeData.solvedStats.hardSolved
+          },
+          leetcodeData: {
+            ranking: leetcodeData.profile.ranking,
+            userAvatar: leetcodeData.profile.avatar,
+            realName: leetcodeData.profile.name,
+            submitStats: {
+              easy: leetcodeData.solvedStats.easySolved,
+              medium: leetcodeData.solvedStats.mediumSolved,
+              hard: leetcodeData.solvedStats.hardSolved
+            },
+            totalSolved: leetcodeData.solvedStats.totalSolved,
+            contestInfo: leetcodeData.contestInfo,
+            streak: leetcodeData.calendar.streak || 0,
+            lastSyncAt: new Date()
+          },
+          streak: leetcodeData.calendar.streak || 0,
+          lastActive: new Date()
+        };
+
+        await User.findByIdAndUpdate(user._id, updates);
+        
+        syncResults.push({
+          userId: user._id,
+          displayName: user.displayName,
+          leetcodeUsername: user.leetcodeUsername,
+          success: true,
+          totalSolved: leetcodeData.solvedStats.totalSolved,
+          skillLevel: leetcodeData.skillLevel
+        });
+        
+        successCount++;
+        
+        // Add delay to respect API rate limits
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+      } catch (userError) {
+        console.error(`Error syncing ${user.displayName}:`, userError.message);
+        
+        syncResults.push({
+          userId: user._id,
+          displayName: user.displayName,
+          leetcodeUsername: user.leetcodeUsername,
+          success: false,
+          error: userError.message
+        });
+        
+        errorCount++;
+      }
+    }
+
+    res.json({
+      success: true,
+      message: `Sync completed: ${successCount} successful, ${errorCount} failed`,
+      syncedUsers: syncResults,
+      summary: {
+        totalUsers: users.length,
+        successCount,
+        errorCount
+      }
+    });
+    
+  } catch (error) {
+    console.error('Bulk sync error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to sync all users LeetCode data'
     });
   }
 });

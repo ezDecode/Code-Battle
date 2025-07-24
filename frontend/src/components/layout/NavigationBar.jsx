@@ -2,13 +2,15 @@ import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/components/ui/Toast";
-import { Bell, LogOut, User, Menu, X, ChevronDown, Zap } from "lucide-react";
+import { Avatar } from "@/components/ui/Avatar";
+import { Bell, LogOut, User, Menu, X, ChevronDown, Zap, RefreshCw } from "lucide-react";
 
 export function NavigationBar() {
   const { state, actions } = useApp();
-  const { user, notifications } = state;
+  const { user, notifications, loading } = state;
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isAvatarDropdownOpen, setIsAvatarDropdownOpen] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
   const toast = useToast();
 
   const unreadCount = notifications.filter(n => !n.read).length;
@@ -18,11 +20,11 @@ export function NavigationBar() {
     setIsAvatarDropdownOpen(false);
   };
 
-  const handleQuickSync = async () => {
-    setIsAvatarDropdownOpen(false);
+  const handleSyncNow = async () => {
+    setIsSyncing(true);
     
     try {
-      const result = await toast.promise(
+      await toast.promise(
         actions.syncLeetCode ? actions.syncLeetCode() : Promise.reject(new Error('Sync not available')),
         {
           loading: 'Syncing with LeetCode...',
@@ -31,8 +33,15 @@ export function NavigationBar() {
         }
       );
     } catch (error) {
-      console.error('Quick sync failed:', error);
+      console.error('Sync failed:', error);
+    } finally {
+      setIsSyncing(false);
     }
+  };
+
+  const handleQuickSync = async () => {
+    setIsAvatarDropdownOpen(false);
+    await handleSyncNow();
   };
 
   const toggleNotifications = () => {
@@ -77,6 +86,25 @@ export function NavigationBar() {
             )}
           </motion.button>
 
+          {/* Sync Now Button */}
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={handleSyncNow}
+            disabled={isSyncing || loading}
+            className="flex items-center space-x-2 px-3 py-2 bg-[#FF0000] text-white rounded-xl hover:bg-[#FF0000]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            title="Sync with LeetCode"
+          >
+            {isSyncing ? (
+              <RefreshCw className="h-4 w-4 animate-spin" />
+            ) : (
+              <Zap className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">
+              {isSyncing ? 'Syncing...' : 'Sync Now'}
+            </span>
+          </motion.button>
+
           {/* User Profile with Dropdown */}
           <div className="relative">
             <motion.button
@@ -91,9 +119,7 @@ export function NavigationBar() {
                   <div className="text-sm font-medium text-black">{user?.name}</div>
                   <div className="text-xs text-black">@{user?.leetcodeUsername}</div>
                 </div>
-                <div className="h-10 w-10 rounded-full bg-[#FF0000] flex items-center justify-center text-white font-bold">
-                  {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                </div>
+                <Avatar user={user} size="md" />
                 <ChevronDown className="h-4 w-4 text-black" />
               </div>
             </motion.button>
@@ -113,9 +139,7 @@ export function NavigationBar() {
                   {/* User Info */}
                   <div className="px-4 py-3 border-b border-gray-400">
                     <div className="flex items-center space-x-3">
-                      <div className="h-12 w-12 rounded-full bg-[#FF0000] flex items-center justify-center text-white font-bold">
-                        {(user?.displayName || user?.name)?.split(' ').map(n => n[0]).join('') || 'U'}
-                      </div>
+                      <Avatar user={user} size="lg" />
                       <div>
                         <div className="text-sm font-medium text-black">{user?.displayName || user?.name}</div>
                         <div className="text-xs text-black">@{user?.leetcodeUsername || 'No LeetCode'}</div>
@@ -160,7 +184,7 @@ export function NavigationBar() {
                       className="flex items-center space-x-3 w-full px-4 py-2 text-[#FF0000] hover:bg-[#FF0000]/10 transition-colors"
                     >
                       <Zap className="h-4 w-4" />
-                      <span>Quick Sync LeetCode</span>
+                      <span>Sync LeetCode</span>
                     </button>
 
                     <div className="border-t border-gray-400 mt-2 pt-2">
@@ -202,9 +226,7 @@ export function NavigationBar() {
             <div className="px-4 py-4 space-y-3">
               {/* User Info */}
               <div className="flex items-center space-x-3 pb-3 border-b border-gray-400">
-                <div className="h-10 w-10 rounded-full bg-[#FF0000] flex items-center justify-center text-white font-bold">
-                  {user?.name?.split(' ').map(n => n[0]).join('') || 'U'}
-                </div>
+                <Avatar user={user} size="md" />
                 <div>
                   <div className="text-sm font-medium text-black">{user?.name}</div>
                   <div className="text-xs text-black">@{user?.leetcodeUsername}</div>
@@ -231,15 +253,20 @@ export function NavigationBar() {
                 )}
               </button>
 
-              <button 
+              <button
                 onClick={() => {
-                  handleQuickSync();
+                  handleSyncNow();
                   setIsMenuOpen(false);
                 }}
-                className="flex items-center space-x-3 w-full p-2 text-[#FF0000] hover:text-[#FF0000] hover:bg-[#FF0000]/10 rounded-xl transition-colors"
+                disabled={isSyncing || loading}
+                className="flex items-center space-x-3 w-full p-2 text-[#FF0000] hover:text-[#FF0000] hover:bg-[#FF0000]/10 rounded-xl transition-colors disabled:opacity-50"
               >
-                <Zap className="h-5 w-5" />
-                <span>Quick Sync LeetCode</span>
+                {isSyncing ? (
+                  <RefreshCw className="h-5 w-5 animate-spin" />
+                ) : (
+                  <Zap className="h-5 w-5" />
+                )}
+                <span>{isSyncing ? 'Syncing...' : 'Sync Now'}</span>
               </button>
 
               {/* Logout - Separated */}

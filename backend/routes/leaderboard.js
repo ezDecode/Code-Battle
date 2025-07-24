@@ -10,7 +10,7 @@ const router = express.Router();
 router.get('/users', auth, async (req, res) => {
   try {
     const users = await User.find({})
-      .select('displayName leetcodeUsername totalScore streak skillLevel')
+      .select('displayName leetcodeUsername totalScore streak skillLevel avatar leetcodeData.userAvatar')
       .sort({ totalScore: -1 })
       .limit(50);
 
@@ -21,7 +21,9 @@ router.get('/users', auth, async (req, res) => {
       leetcodeUsername: user.leetcodeUsername,
       totalScore: user.totalScore,
       streak: user.streak,
-      skillLevel: user.skillLevel
+      skillLevel: user.skillLevel,
+      avatar: user.avatar,
+      leetcodeAvatar: user.leetcodeData?.userAvatar
     }));
 
     res.json(leaderboard);
@@ -91,7 +93,7 @@ router.get('/user/:userId', auth, async (req, res) => {
 
     // Get nearby users (5 above and 5 below)
     const nearbyUsers = await User.find({})
-      .select('displayName leetcodeUsername totalScore streak skillLevel')
+      .select('displayName leetcodeUsername totalScore streak skillLevel avatar leetcodeData.userAvatar')
       .sort({ totalScore: -1 })
       .skip(Math.max(0, userRank - 6))
       .limit(11);
@@ -104,6 +106,8 @@ router.get('/user/:userId', auth, async (req, res) => {
       totalScore: user.totalScore,
       streak: user.streak,
       skillLevel: user.skillLevel,
+      avatar: user.avatar,
+      leetcodeAvatar: user.leetcodeData?.userAvatar,
       isCurrentUser: user._id.equals(targetUser._id)
     }));
 

@@ -281,15 +281,32 @@ export const AppProvider = ({ children }) => {
       return;
     }
     
+    // Additional check for token
+    if (!api.token) {
+      console.log('⚠️ No authentication token available, skipping dashboard data fetch');
+      return;
+    }
+    
     dispatch({ type: ActionTypes.FETCH_DATA_START });
     try {
       const data = await api.dashboard.getData();
       dispatch({ type: ActionTypes.FETCH_DATA_SUCCESS, payload: data });
     } catch (error) {
       console.error('❌ Failed to fetch dashboard data:', error);
+      
+      // If it's an authentication error, don't treat it as a fatal error
+      if (error.message?.includes('authorization') || error.message?.includes('token') || error.message?.includes('401')) {
+        console.log('🔄 Authentication issue detected, user may need to log in again');
+        // Clear invalid token and reset auth state
+        localStorage.removeItem('authToken');
+        api.token = null;
+        dispatch({ type: ActionTypes.LOGOUT });
+        return;
+      }
+      
       dispatch({ type: ActionTypes.FETCH_DATA_FAILURE, payload: error.message });
     }
-  }, [dispatch]); // Remove unstable dependencies
+  }, [dispatch, state.isAuthenticated, state.loading]); // Include relevant dependencies
 
   // Actions
   const actions = {
@@ -305,7 +322,7 @@ export const AppProvider = ({ children }) => {
         
         actions.addNotification({
           type: 'success',
-          message: `Welcome back, ${user.name}!`,
+          message: `Welcome back, ${user.displayName || user.name || 'User'}!`,
           duration: 5000
         });
       } catch (error) {
@@ -418,11 +435,16 @@ export const AppProvider = ({ children }) => {
         const result = await api.leetcode.sync();
         dispatch({ type: ActionTypes.SYNC_LEETCODE_SUCCESS, payload: result });
         
+        // Refresh dashboard data after successful sync
+        await actions.fetchDashboardData();
+        
         actions.addNotification({
           type: 'success',
           message: 'LeetCode data synced successfully!',
           duration: 5000
         });
+        
+        return result;
       } catch (error) {
         dispatch({ type: ActionTypes.SYNC_LEETCODE_FAILURE, payload: error.message });
         actions.addNotification({
@@ -430,6 +452,7 @@ export const AppProvider = ({ children }) => {
           message: 'Failed to sync LeetCode data.',
           duration: 5000
         });
+        throw error; // Re-throw to allow caller to handle
       }
     },
 

@@ -137,9 +137,10 @@ export const DashboardErrorBoundary = ({ children }) => (
           className="text-center"
         >
           <AlertTriangle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-800 mb-2">Dashboard Unavailable</h1>
-          <p className="text-gray-600 mb-6 max-w-md">
-            We're experiencing technical difficulties. Please try refreshing the page.
+          <h1 className="text-2xl font-bold text-gray-800 mb-2 text-center">Dashboard Unavailable</h1>
+          <p className="text-gray-600 mb-6 max-w-md mx-auto text-center">
+            We're experiencing technical difficulties. Please 
+            try refreshing the page.
           </p>
           <div className="space-x-4">
             <button

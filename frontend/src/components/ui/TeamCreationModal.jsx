@@ -9,7 +9,6 @@ import {
   Globe, 
   Lock, 
   AlertCircle,
-  CheckCircle,
   Loader2
 } from "lucide-react";
 
@@ -25,8 +24,6 @@ export function TeamCreationModal() {
   });
   
   const [isLoading, setIsLoading] = useState(false);
-  const [nameValid, setNameValid] = useState(null);
-  const [nameCheckLoading, setNameCheckLoading] = useState(false);
   const [error, setError] = useState('');
 
   if (!modals.teamCreation) return null;
@@ -34,36 +31,15 @@ export function TeamCreationModal() {
   const closeModal = () => {
     actions.toggleModal('teamCreation', false);
     setFormData({ name: '', description: '', isPublic: true });
-    setNameValid(null);
     setError('');
   };
 
   const handleInputChange = (field, value) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Reset name validation when name changes
-    if (field === 'name') {
-      setNameValid(null);
+    // Reset error when input changes
+    if (error) {
       setError('');
-    }
-  };
-
-  const checkTeamNameAvailability = async () => {
-    if (!formData.name.trim()) return;
-    
-    setNameCheckLoading(true);
-    try {
-      const response = await api.get(`/teams/check-name/${encodeURIComponent(formData.name.trim())}`);
-      setNameValid(response.available);
-      if (!response.available) {
-        setError('Team name is already taken');
-      }
-    } catch (error) {
-      console.error('Name check error:', error);
-      setNameValid(false);
-      setError('Error checking team name availability');
-    } finally {
-      setNameCheckLoading(false);
     }
   };
 
@@ -92,15 +68,6 @@ export function TeamCreationModal() {
         return;
       }
 
-      // Check name availability if not already checked
-      if (nameValid === null) {
-        await checkTeamNameAvailability();
-        if (nameValid === false) {
-          setIsLoading(false);
-          return;
-        }
-      }
-
       // Create team
       const teamData = {
         name: formData.name.trim(),
@@ -108,7 +75,7 @@ export function TeamCreationModal() {
         isPublic: formData.isPublic
       };
 
-      const response = await api.post('/teams', teamData);
+      const response = await api.teams.create(teamData);
       
       // Success handling
       toast.success(`Team "${formData.name}" created successfully!`, {
@@ -201,25 +168,11 @@ export function TeamCreationModal() {
                     type="text"
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
-                    onBlur={checkTeamNameAvailability}
                     placeholder="Enter team name"
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     disabled={isLoading}
                     maxLength={50}
                   />
-                  
-                  {/* Name validation indicators */}
-                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                    {nameCheckLoading && (
-                      <Loader2 className="h-5 w-5 text-blue-500 animate-spin" />
-                    )}
-                    {nameValid === true && (
-                      <CheckCircle className="h-5 w-5 text-green-500" />
-                    )}
-                    {nameValid === false && (
-                      <AlertCircle className="h-5 w-5 text-red-500" />
-                    )}
-                  </div>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   {formData.name.length}/50 characters
@@ -297,7 +250,7 @@ export function TeamCreationModal() {
               <div className="pt-2">
                 <button
                   type="submit"
-                  disabled={isLoading || !formData.name.trim() || nameValid === false}
+                  disabled={isLoading || !formData.name.trim()}
                   className="w-full py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-lg hover:from-blue-700 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-2"
                 >
                   {isLoading ? (

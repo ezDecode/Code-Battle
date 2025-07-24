@@ -45,6 +45,7 @@ app.use('/api/teams', require('./routes/teams'));
 app.use('/api/challenges', require('./routes/challenges'));
 app.use('/api/leaderboard', require('./routes/leaderboard'));
 app.use('/api/leetcode', require('./routes/leetcode'));
+app.use('/api/daily-challenge', require('./routes/dailyChallenge'));
 
 // MongoDB connection
 const connectDB = async () => {

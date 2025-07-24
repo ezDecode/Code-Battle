@@ -3,7 +3,6 @@ import { motion } from "framer-motion";
 import { useApp } from "@/contexts/AppContext";
 import { useToast } from "@/components/ui/Toast";
 import { NavigationBar } from "./NavigationBar";
-import { LeetCodeSync } from "@/components/ui/LeetCodeSync";
 import { TeamDetailsModal } from "@/components/ui/TeamDetailsModal";
 import { TeamCreationModal } from "@/components/ui/TeamCreationModal";
 import { LeaderboardModal } from "@/components/ui/LeaderboardModal";
@@ -19,7 +18,6 @@ import {
   Calendar,
   Star,
   Award,
-  Zap,
   ChevronRight,
   Crown,
   Medal,
@@ -31,8 +29,8 @@ const BentoCard = ({ className, children, gradient, onClick, hover = true }) => 
   <motion.div
     className={`relative overflow-hidden rounded-2xl ${gradient} p-6 ${
       onClick ? 'cursor-pointer' : ''
-    } ${className}`}
-    whileHover={hover && onClick ? { y: -2 } : {}}
+    } ${className} transition-all duration-300 shadow-lg hover:shadow-xl`}
+    whileHover={hover && onClick ? { y: -4, scale: 1.02 } : hover ? { y: -2 } : {}}
     whileTap={onClick ? { scale: 0.98 } : {}}
     onClick={onClick}
     initial={{ opacity: 0, y: 20 }}
@@ -59,10 +57,6 @@ export default function Dashboard() {
 
   const handleViewLeaderboard = () => {
     actions.toggleModal('leaderboard', true);
-  };
-
-  const handleSyncLeetCode = () => {
-    actions.toggleModal('leetcodeSync', true);
   };
 
   // Show loading skeleton if user is not authenticated or data is loading
@@ -102,10 +96,6 @@ export default function Dashboard() {
     totalPoints: teamData.totalPoints || 0
   } : null;
 
-  // Create challenges array from dailyChallenge or use empty array
-  const challenges = dailyChallenge ? [dailyChallenge] : [];
-  const todayChallenges = challenges.slice(0, 3);
-
   // Ensure leaderboard is an array
   const safeLeaderboard = Array.isArray(leaderboard) ? leaderboard : [];
 
@@ -114,63 +104,208 @@ export default function Dashboard() {
       <div className="min-h-screen bg-[#D9D9D9]">
         <NavigationBar />
         
-        <div className="max-w-7xl mx-auto p-6 space-y-6">
+        <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
           {/* Welcome Section */}
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="text-center py-8"
+            className="text-center py-6 sm:py-8"
           >
-            <h1 className="text-4xl font-bold text-black mb-2">
+            <h1 className="text-3xl sm:text-4xl font-bold text-black mb-2">
               Welcome back, {user?.name?.split(' ')[0] || user?.displayName || 'Coder'}! 👋
             </h1>
-            <p className="text-black text-lg">
+            <p className="text-black text-base sm:text-lg">
               Ready to crush some algorithms today?
             </p>
           </motion.div>
 
         {/* Main Bento Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-8 xl:grid-cols-12 gap-4 sm:gap-6">
           
-          {/* User Stats - Large Card */}
+          {/* User Stats - Large Dominant Card */}
           <BentoCard
-            className="md:col-span-2 lg:col-span-2"
+            className="sm:col-span-2 lg:col-span-5 xl:col-span-6 lg:row-span-2"
             gradient="bg-[#FF0000] text-white"
             hover={false}
           >
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center space-x-3">
-                <div className="p-2 bg-white/20 rounded-xl">
+                <div className="p-3 bg-white/20 rounded-xl">
                   <Code className="h-6 w-6" />
                 </div>
-                <h3 className="text-xl font-bold">Your Progress</h3>
+                <h3 className="text-lg sm:text-xl font-bold">Your Progress</h3>
               </div>
               <Flame className="h-8 w-8 text-orange-300" />
             </div>
             
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-1">
-                <p className="text-blue-100 text-sm">Problems Solved</p>
-                <p className="text-3xl font-bold">{displayUserStats.totalSolved}</p>
+            <div className="grid grid-cols-2 gap-4 sm:gap-6">
+              <div className="space-y-2">
+                <p className="text-red-100 text-xs sm:text-sm font-medium">Problems Solved</p>
+                <p className="text-2xl sm:text-4xl font-bold">{displayUserStats.totalSolved}</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-blue-100 text-sm">Weekly Streak</p>
-                <p className="text-3xl font-bold">{displayUserStats.weeklyStreak} days</p>
+              <div className="space-y-2">
+                <p className="text-red-100 text-xs sm:text-sm font-medium">Weekly Streak</p>
+                <p className="text-2xl sm:text-4xl font-bold">{displayUserStats.weeklyStreak} <span className="text-sm sm:text-lg">days</span></p>
               </div>
-              <div className="space-y-1">
-                <p className="text-blue-100 text-sm">Global Rank</p>
-                <p className="text-2xl font-bold">#{displayUserStats.rank || 'Unranked'}</p>
+              <div className="space-y-2">
+                <p className="text-red-100 text-xs sm:text-sm font-medium">Global Rank</p>
+                <p className="text-xl sm:text-3xl font-bold">#{displayUserStats.rank || 'Unranked'}</p>
               </div>
-              <div className="space-y-1">
-                <p className="text-blue-100 text-sm">Rating</p>
-                <p className="text-2xl font-bold">{displayUserStats.rating}</p>
+              <div className="space-y-2">
+                <p className="text-red-100 text-xs sm:text-sm font-medium">Rating</p>
+                <p className="text-xl sm:text-3xl font-bold">{displayUserStats.rating}</p>
+              </div>
+            </div>
+          </BentoCard>
+
+          {/* Today's Daily Challenge */}
+          <BentoCard
+            className="sm:col-span-2 lg:col-span-3 xl:col-span-4 lg:row-span-2"
+            gradient="bg-gradient-to-br from-indigo-500 to-blue-600 text-white"
+            hover={false}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <div className="p-3 bg-white/20 rounded-xl">
+                  <Target className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg sm:text-xl font-bold">Today's LeetCode Challenge</h3>
+              </div>
+              {dailyChallenge?.date && (
+                <div className="text-xs bg-white/20 px-2 py-1 rounded-lg">
+                  {new Date(dailyChallenge.date).toLocaleDateString()}
+                </div>
+              )}
+            </div>
+            
+            <div className="space-y-4">
+              {dailyChallenge ? (
+                <div className="space-y-4">
+                  {/* Main Challenge Card */}
+                  <div
+                    className="p-4 bg-white/10 rounded-xl hover:bg-white/15 transition-all duration-300 cursor-pointer group"
+                    onClick={() => dailyChallenge.link && window.open(dailyChallenge.link, '_blank')}
+                  >
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex items-center space-x-3">
+                        <div className={`h-3 w-3 rounded-full ${
+                          dailyChallenge.difficulty === 'Easy' ? 'bg-green-400' :
+                          dailyChallenge.difficulty === 'Medium' ? 'bg-yellow-400' : 'bg-red-400'
+                        }`} />
+                        <div>
+                          <p className="font-semibold text-lg group-hover:text-blue-200 transition-colors">
+                            {dailyChallenge.title}
+                          </p>
+                          <p className="text-blue-200 text-sm">
+                            {dailyChallenge.difficulty} • {dailyChallenge.points} pts
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Calendar className="h-4 w-4 text-blue-200" />
+                        <ChevronRight className="h-5 w-5 text-blue-200 group-hover:translate-x-1 transition-transform" />
+                      </div>
+                    </div>
+                    
+                    {/* Challenge Description */}
+                    {dailyChallenge.description && (
+                      <p className="text-blue-100 text-sm mb-3 overflow-hidden" style={{
+                        display: '-webkit-box',
+                        WebkitLineClamp: 3,
+                        WebkitBoxOrient: 'vertical',
+                        textOverflow: 'ellipsis'
+                      }}>
+                        {dailyChallenge.description}
+                      </p>
+                    )}
+                    
+                    {/* Topic Tags */}
+                    {dailyChallenge.topicTags && dailyChallenge.topicTags.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mb-3">
+                        {dailyChallenge.topicTags.slice(0, 3).map((tag, index) => (
+                          <span 
+                            key={index}
+                            className="text-xs bg-white/20 text-blue-100 px-2 py-1 rounded-full"
+                          >
+                            {tag.name || tag}
+                          </span>
+                        ))}
+                        {dailyChallenge.topicTags.length > 3 && (
+                          <span className="text-xs bg-white/20 text-blue-100 px-2 py-1 rounded-full">
+                            +{dailyChallenge.topicTags.length - 3} more
+                          </span>
+                        )}
+                      </div>
+                    )}
+                    
+                    {/* Action Button */}
+                    <div className="flex items-center justify-between">
+                      <div className="text-xs text-blue-200">
+                        Click to solve on LeetCode
+                      </div>
+                      <div className="flex items-center space-x-2 text-xs text-blue-200">
+                        <Star className="h-3 w-3" />
+                        <span>Daily Challenge</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="p-4 bg-white/10 rounded-xl text-center">
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-3 w-3 rounded-full bg-green-400" />
+                        <div>
+                          <p className="font-semibold">Loading daily challenge...</p>
+                          <p className="text-blue-200 text-sm">Please wait</p>
+                        </div>
+                      </div>
+                      <div className="animate-spin h-4 w-4 border-2 border-blue-200 border-t-transparent rounded-full" />
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </BentoCard>
+
+          {/* Leaderboard Card */}
+          <BentoCard
+            className="sm:col-span-1 lg:col-span-3 xl:col-span-3"
+            gradient="bg-gradient-to-br from-orange-500 to-red-600 text-white"
+            onClick={handleViewLeaderboard}
+          >
+            <div className="flex items-center space-x-3 mb-4">
+              <div className="p-2 bg-white/20 rounded-xl">
+                <Trophy className="h-5 w-5" />
+              </div>
+              <h3 className="font-bold">Leaderboard</h3>
+            </div>
+            
+            <div className="space-y-4">
+              <div className="flex items-center space-x-3">
+                <Crown className="h-6 w-6 text-yellow-300" />
+                <div>
+                  <p className="text-orange-100 text-sm">Top Performer</p>
+                  <p className="font-bold">{safeLeaderboard[0]?.name || 'Lark Mahem'}</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <span className="text-orange-100 text-sm">Your Position</span>
+                <span className="font-bold text-lg">#{displayUserStats.rank || '2581316'}</span>
+              </div>
+              
+              <div className="flex items-center text-sm text-orange-200 hover:text-white transition-colors">
+                <span>View full rankings</span>
+                <ChevronRight className="h-4 w-4 ml-1" />
               </div>
             </div>
           </BentoCard>
 
           {/* Team Card */}
           <BentoCard
-            className="lg:col-span-1"
+            className="sm:col-span-2 lg:col-span-3 xl:col-span-3"
             gradient={teamData ? "bg-gradient-to-br from-green-500 to-teal-600 text-white" : "bg-gradient-to-br from-gray-400 to-gray-600 text-white"}
             onClick={teamData ? handleJoinTeam : undefined}
             hover={!!teamData}
@@ -183,18 +318,20 @@ export default function Dashboard() {
             </div>
             
             {teamData ? (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div>
                   <p className="text-green-100 text-sm">{teamData.name}</p>
                   <p className="text-xl font-bold">Rank #{teamStats.teamRank || 'Unranked'}</p>
                 </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-green-100">Members</span>
-                  <span className="font-semibold">{teamStats.totalMembers}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-green-100">Weekly Progress</span>
-                  <span className="font-semibold">{teamStats.weeklyProgress}%</span>
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-100">Members</span>
+                    <span className="font-semibold">{teamStats.totalMembers}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-green-100">Weekly Progress</span>
+                    <span className="font-semibold">{teamStats.weeklyProgress}%</span>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -203,14 +340,14 @@ export default function Dashboard() {
                 <div className="space-y-2">
                   <button
                     onClick={handleCreateTeam}
-                    className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 rounded-lg p-3 text-white transition-all duration-200 flex items-center justify-center space-x-2"
+                    className="w-full bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/30 rounded-lg p-2 sm:p-3 text-white transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Create Team</span>
                   </button>
                   <button
                     onClick={handleJoinTeam}
-                    className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-lg p-3 text-white transition-all duration-200 flex items-center justify-center space-x-2"
+                    className="w-full bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/20 rounded-lg p-2 sm:p-3 text-white transition-all duration-200 flex items-center justify-center space-x-2 text-sm"
                   >
                     <Users className="h-4 w-4" />
                     <span>Join Team</span>
@@ -220,158 +357,12 @@ export default function Dashboard() {
             )}
           </BentoCard>
 
-          {/* Leaderboard Card */}
-          <BentoCard
-            className="lg:col-span-1"
-            gradient="bg-gradient-to-br from-orange-500 to-red-600 text-white"
-            onClick={handleViewLeaderboard}
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-white/20 rounded-xl">
-                <Trophy className="h-5 w-5" />
-              </div>
-              <h3 className="font-bold">Leaderboard</h3>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <Crown className="h-5 w-5 text-yellow-300" />
-                <div>
-                  <p className="text-orange-100 text-sm">Top Performer</p>
-                  <p className="font-bold text-sm">{safeLeaderboard[0]?.name || 'Loading...'}</p>
-                </div>
-              </div>
-              
-              <div className="flex items-center justify-between">
-                <span className="text-orange-100 text-sm">Your Position</span>
-                <span className="font-bold">#{displayUserStats.rank || 'Unranked'}</span>
-              </div>
-              
-              <div className="flex items-center text-sm text-orange-200">
-                <span>View full rankings</span>
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </div>
-            </div>
-          </BentoCard>
-
-          {/* Today's Challenges */}
-          <BentoCard
-            className="md:col-span-2 lg:col-span-2"
-            gradient="bg-gradient-to-br from-indigo-500 to-blue-600 text-white"
-            hover={false}
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-white/20 rounded-xl">
-                <Target className="h-6 w-6" />
-              </div>
-              <h3 className="text-xl font-bold">Today's Challenges</h3>
-            </div>
-            
-            <div className="grid gap-3">
-              {todayChallenges.length > 0 ? (
-                todayChallenges.map((challenge, index) => (
-                  <div
-                    key={challenge.id || index}
-                    className="flex items-center justify-between p-3 bg-white/10 rounded-xl hover:bg-white/15 transition-colors cursor-pointer"
-                  >
-                    <div className="flex items-center space-x-3">
-                      <div className={`h-3 w-3 rounded-full ${
-                        challenge.difficulty === 'Easy' ? 'bg-green-400' :
-                        challenge.difficulty === 'Medium' ? 'bg-yellow-400' : 'bg-red-400'
-                      }`} />
-                      <div>
-                        <p className="font-semibold">{challenge.title || 'Challenge'}</p>
-                        <p className="text-blue-200 text-sm">{challenge.difficulty || 'Medium'} • {challenge.points || 100} pts</p>
-                      </div>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-blue-200" />
-                  </div>
-                ))
-              ) : (
-                <div className="p-3 bg-white/10 rounded-xl text-center">
-                  <p className="text-blue-200">No challenges available today</p>
-                  <p className="text-blue-300 text-sm mt-1">Check back later!</p>
-                </div>
-              )}
-            </div>
-          </BentoCard>
-
-          {/* Recent Activity */}
-          <BentoCard
-            className="lg:col-span-1"
-            gradient="bg-gradient-to-br from-purple-500 to-pink-600 text-white"
-            hover={false}
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-white/20 rounded-xl">
-                <TrendingUp className="h-5 w-5" />
-              </div>
-              <h3 className="font-bold">Recent Activity</h3>
-            </div>
-            
-            <div className="space-y-3">
-              {displayUserStats.recentSolves.length > 0 ? (
-                displayUserStats.recentSolves.map((solve, index) => (
-                  <div key={index} className="space-y-1">
-                    <p className="font-semibold text-sm">{solve.name}</p>
-                    <div className="flex justify-between text-xs">
-                      <span className={`px-2 py-1 rounded-full text-xs ${
-                        solve.difficulty === 'Easy' ? 'bg-green-500/30' :
-                        solve.difficulty === 'Medium' ? 'bg-yellow-500/30' : 'bg-red-500/30'
-                      }`}>
-                        {solve.difficulty}
-                      </span>
-                      <span className="text-purple-200">{solve.time}</span>
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <div className="text-center text-purple-200 py-4">
-                  <p className="text-sm">No recent activity</p>
-                  <p className="text-xs mt-1">Solve some problems to see your progress!</p>
-                </div>
-              )}
-            </div>
-          </BentoCard>
-
-          {/* LeetCode Sync */}
-          <BentoCard
-            className="lg:col-span-1"
-            gradient="bg-gradient-to-br from-teal-500 to-cyan-600 text-white"
-            onClick={handleSyncLeetCode}
-          >
-            <div className="flex items-center space-x-3 mb-4">
-              <div className="p-2 bg-white/20 rounded-xl">
-                <Zap className="h-5 w-5" />
-              </div>
-              <h3 className="font-bold">LeetCode Sync</h3>
-            </div>
-            
-            <div className="space-y-3">
-              <div className="flex items-center space-x-2">
-                <div className="h-2 w-2 bg-green-400 rounded-full animate-pulse" />
-                <span className="text-teal-100 text-sm">Connected</span>
-              </div>
-              
-              <div>
-                <p className="text-teal-100 text-sm">Last sync</p>
-                <p className="font-semibold">2 hours ago</p>
-              </div>
-              
-              <div className="flex items-center text-sm text-teal-200">
-                <span>Sync now</span>
-                <ChevronRight className="h-4 w-4 ml-1" />
-              </div>
-            </div>
-          </BentoCard>
-
         </div>
 
         {/* Modals */}
         {modals.teamDetails && <TeamDetailsModal />}
         {modals.teamCreation && <TeamCreationModal />}
         {modals.leaderboard && <LeaderboardModal />}
-        {modals.leetcodeSync && <LeetCodeSync />}
         {modals.profileSettings && <ProfileSettingsModal />}
         </div>
       </div>
