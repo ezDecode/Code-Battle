@@ -48,19 +48,20 @@ const useSmoothScroll = () => {
   }, []);
 };
 
-// Enhanced CTA Button Component
+// Enhanced CTA Button Component with optimized responsive design
 const CTAButton = memo(({ children, onClick, ariaLabel, variant = 'primary', className = '' }) => {
   const baseStyles = {
     fontFamily: 'Outreque, sans-serif',
     fontWeight: '700',
-    minWidth: 'clamp(180px, 40vw, 320px)',
-    height: 'clamp(44px, 8vw, 72px)',
-    borderRadius: 'clamp(22px, 4vw, 36px)',
-    fontSize: 'clamp(14px, 3.2vw, 22px)',
-    padding: '0 clamp(14px, 3.5vw, 28px)',
+    minWidth: 'clamp(200px, 45vw, 280px)',
+    height: 'clamp(48px, 6vw, 64px)', // Increased minimum height for better touch targets
+    borderRadius: 'clamp(24px, 3vw, 32px)',
+    fontSize: 'clamp(16px, 2.8vw, 20px)', // Improved text scaling
+    padding: '0 clamp(16px, 3vw, 24px)',
     border: 'none',
     cursor: 'pointer',
-    transition: 'opacity 0.3s ease'
+    transition: 'all 0.3s ease',
+    textAlign: 'center'
   };
 
   const variantStyles = variant === 'outline' 
@@ -78,7 +79,7 @@ const CTAButton = memo(({ children, onClick, ariaLabel, variant = 'primary', cla
     <button
       onClick={onClick}
       aria-label={ariaLabel}
-      className={`inline-flex items-center justify-center font-bold transition-opacity duration-300 hover:opacity-90 focus:opacity-90 focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-30 ${className}`}
+      className={`inline-flex items-center justify-center font-bold transition-all duration-300 hover:opacity-90 focus:opacity-90 focus:outline-none focus:ring-2 focus:ring-black focus:ring-opacity-30 ${className}`}
       style={{
         ...baseStyles,
         ...variantStyles
@@ -134,22 +135,22 @@ const LandingPage = memo(() => {
         Skip to main content
       </a>
 
-      {/* Main container - Dynamic responsive layout */}
+      {/* Main container - Enhanced responsive layout with optimal tablet experience */}
       <div 
-        className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16 2xl:px-20"
-        style={{ maxWidth: 'clamp(320px, 95vw, 1600px)' }}
+        className="mx-auto w-full px-3 sm:px-4 md:px-6 lg:px-8 xl:px-12 2xl:px-16"
+        style={{ maxWidth: 'clamp(320px, 100vw, 1400px)' }}
       >
         
         {/* HERO SECTION */}
         <section className="relative min-h-screen flex flex-col" role="banner">
-          {/* Navigation Header - Perfectly aligned */}
-          <header className="flex items-center justify-between z-10 w-full pt-4 sm:pt-6 md:pt-8" style={{ minHeight: '80px' }}>
-            {/* Logo - Exact match with NavigationBar */}
+          {/* Navigation Header - Enhanced responsive layout with better tablet support */}
+          <header className="flex items-center justify-between z-10 w-full pt-4 sm:pt-5 md:pt-6 lg:pt-8" style={{ minHeight: '80px' }}>
+            {/* Logo - Optimized responsive scaling */}
             <div className="flex-shrink-0">
               <div 
                 className="text-black font-bold"
                 style={{
-                  fontSize: 'clamp(24px, 6vw, 36px)',
+                  fontSize: 'clamp(28px, 5vw, 36px)',
                   fontWeight: '700',
                   fontFamily: 'Outreque, sans-serif',
                   lineHeight: '1'
@@ -161,15 +162,16 @@ const LandingPage = memo(() => {
               </div>
             </div>
 
-            {/* Right Navigation - Enhanced layout */}
-            <nav className="flex items-center gap-3 sm:gap-4 md:gap-6 lg:gap-8" role="navigation">
+            {/* Right Navigation - Improved spacing and touch targets */}
+            <nav className="flex items-center gap-2 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8" role="navigation">
               <button
                 onClick={handleSignIn}
-                className="text-black font-bold hover:opacity-70 focus:opacity-70 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-opacity duration-300 rounded-lg px-4 py-2"
+                className="text-black font-bold hover:opacity-70 focus:opacity-70 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-opacity duration-300 rounded-lg px-3 py-2 md:px-4"
                 style={{
-                  fontSize: 'clamp(16px, 4vw, 26px)',
+                  fontSize: 'clamp(16px, 3.5vw, 24px)',
                   fontWeight: '700',
-                  fontFamily: 'Outreque, sans-serif'
+                  fontFamily: 'Outreque, sans-serif',
+                  minHeight: '44px' // Ensure touch target
                 }}
                 aria-label="Sign in to your account"
               >
@@ -186,40 +188,40 @@ const LandingPage = memo(() => {
             </nav>
           </header>
 
-          {/* Hero Content - Optimized spacing and typography */}
+          {/* Hero Content - Enhanced responsive spacing and typography */}
           <main 
             id="main-content" 
-            className="flex-1 flex flex-col items-center justify-center text-center px-2 sm:px-4 md:px-6"
+            className="flex-1 flex flex-col items-center justify-center text-center px-2 sm:px-3 md:px-4 lg:px-6"
             role="main"
-            style={{ paddingTop: '2rem', paddingBottom: '2rem' }}
+            style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}
           >
             <div className="w-full max-w-full">
-              {/* Main Headline - Enhanced with better spacing */}
+              {/* Main Headline - Optimized responsive scaling */}
               <h1 
-                className="text-black font-black leading-tight mb-6 sm:mb-8 md:mb-12"
+                className="text-black font-black leading-tight mb-4 sm:mb-6 md:mb-8 lg:mb-12"
                 style={{
-                  fontSize: 'clamp(48px, 12vw, 160px)',
+                  fontSize: 'clamp(44px, 10vw, 140px)',
                   fontWeight: '900',
                   fontFamily: 'Outreque, sans-serif',
-                  lineHeight: '0.85',
+                  lineHeight: '0.9',
                   letterSpacing: '-0.02em'
                 }}
               >
                 Code & Compete
               </h1>
 
-              {/* Subtitle - Clean and optimized */}
-              <div className="w-full flex justify-center mb-8 sm:mb-10 md:mb-16">
+              {/* Subtitle - Enhanced responsive design */}
+              <div className="w-full flex justify-center mb-6 sm:mb-8 md:mb-12 lg:mb-16">
                 <p 
-                  className="text-center px-4"
+                  className="text-center px-3 sm:px-4 md:px-6"
                   style={{
                     color: '#000000',
-                    fontSize: 'clamp(16px, 4vw, 36px)',
+                    fontSize: 'clamp(16px, 3.5vw, 32px)',
                     fontWeight: '500',
                     fontFamily: 'Outreque, sans-serif',
-                    lineHeight: '1.4',
+                    lineHeight: '1.5',
                     opacity: '0.9',
-                    maxWidth: 'clamp(384px, 92vw, 1080px)',
+                    maxWidth: 'clamp(340px, 90vw, 1000px)',
                     margin: '0 auto'
                   }}
                 >
@@ -228,8 +230,8 @@ const LandingPage = memo(() => {
                 </p>
               </div>
 
-              {/* CTA Buttons - Enhanced layout and interaction */}
-              <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 lg:gap-8 justify-center items-center w-full max-w-none mx-auto px-4">
+              {/* CTA Buttons - Improved responsive stacking and spacing */}
+              <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 md:gap-6 lg:gap-8 justify-center items-center w-full max-w-none mx-auto px-3 sm:px-4">
                 <CTAButton
                   onClick={handleJoinTeam}
                   ariaLabel="Join a team and start competing"
@@ -250,36 +252,36 @@ const LandingPage = memo(() => {
           </main>
         </section>
 
-        {/* FEATURES SECTION - Enhanced with better visual hierarchy */}
+        {/* FEATURES SECTION - Complete responsive redesign with proper tablet layout */}
         <section 
-          className="relative py-16 sm:py-20 md:py-24" 
+          className="relative py-12 sm:py-16 md:py-20 lg:py-24" 
           role="region" 
           aria-labelledby="features-heading"
         >
-          <div className="w-full flex flex-col items-center text-center mb-12 sm:mb-16 md:mb-20">
+          <div className="w-full flex flex-col items-center text-center mb-8 sm:mb-12 md:mb-16 lg:mb-20 px-3 sm:px-4 md:px-6">
             <h2 
               id="features-heading"
-              className="text-black font-black leading-tight mb-4 sm:mb-6 text-center"
+              className="text-black font-black leading-tight mb-3 sm:mb-4 md:mb-6 text-center"
               style={{
-                fontSize: 'clamp(32px, 8vw, 80px)',
+                fontSize: 'clamp(36px, 7vw, 72px)',
                 fontWeight: '900',
                 fontFamily: 'Outreque, sans-serif',
-                lineHeight: '0.9',
+                lineHeight: '0.95',
                 textAlign: 'center'
               }}
             >
               Why CodeBattle?
             </h2>
             <p 
-              className="text-center text-black px-4"
+              className="text-center text-black px-3 sm:px-4"
               style={{
-                fontSize: 'clamp(14px, 3vw, 24px)',
+                fontSize: 'clamp(16px, 2.8vw, 22px)',
                 fontWeight: '400',
                 fontFamily: 'Outreque, sans-serif',
-                lineHeight: '1.5',
+                lineHeight: '1.6',
                 opacity: '0.8',
                 textAlign: 'center',
-                maxWidth: '768px',
+                maxWidth: '700px',
                 margin: '0 auto'
               }}
             >
@@ -287,8 +289,8 @@ const LandingPage = memo(() => {
             </p>
           </div>
           
-          <div className="w-full max-w-7xl mx-auto">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 lg:gap-8">
+          <div className="w-full max-w-6xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
               {[
                 {
                   title: "⚡ Syncs with LeetCode",
@@ -305,30 +307,31 @@ const LandingPage = memo(() => {
               ].map((feature, index) => (
                 <div 
                   key={index}
-                  className="bg-white rounded-3xl shadow-lg p-6 lg:p-8 text-center hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col items-center"
+                  className="bg-white rounded-2xl sm:rounded-3xl shadow-lg p-4 sm:p-6 md:p-8 text-center hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col items-center"
                   style={{ 
-                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)'
+                    background: 'linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%)',
+                    minHeight: '280px'
                   }}
                 >
                   <h3 
-                    className="text-black font-black mb-4 text-center"
+                    className="text-black font-black mb-3 sm:mb-4 text-center"
                     style={{
-                      fontSize: 'clamp(18px, 4vw, 28px)',
+                      fontSize: 'clamp(20px, 3.5vw, 26px)',
                       fontWeight: '900',
                       fontFamily: 'Outreque, sans-serif',
-                      lineHeight: '1.2',
+                      lineHeight: '1.3',
                       textAlign: 'center'
                     }}
                   >
                     {feature.title}
                   </h3>
                   <p 
-                    className="text-black text-center"
+                    className="text-black text-center flex-1 flex items-center"
                     style={{
-                      fontSize: 'clamp(14px, 3vw, 18px)',
+                      fontSize: 'clamp(14px, 2.5vw, 16px)',
                       fontWeight: '400',
                       fontFamily: 'Outreque, sans-serif',
-                      lineHeight: '1.5',
+                      lineHeight: '1.6',
                       opacity: '0.8',
                       textAlign: 'center'
                     }}
@@ -341,36 +344,36 @@ const LandingPage = memo(() => {
           </div>
         </section>
 
-        {/* TEAM SECTION - Enhanced with better visual impact */}
-        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-2 sm:px-4 md:px-6 py-8 sm:py-12 md:py-16">
+        {/* TEAM SECTION - Enhanced responsive design with better spacing */}
+        <section className="relative min-h-screen flex flex-col items-center justify-center text-center px-3 sm:px-4 md:px-6 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-24">
           <div className="w-full max-w-full">
             
-            {/* Section Headline */}
+            {/* Section Headline - Optimized responsive scaling */}
             <h2 
-              className="text-black font-black leading-tight mb-6 sm:mb-8 md:mb-12 relative z-10"
+              className="text-black font-black leading-tight mb-4 sm:mb-6 md:mb-8 lg:mb-12 relative z-10"
               style={{
-                fontSize: 'clamp(40px, 10vw, 130px)',
+                fontSize: 'clamp(42px, 9vw, 120px)',
                 fontWeight: '900',
                 fontFamily: 'Outreque, sans-serif',
-                lineHeight: '0.85',
+                lineHeight: '0.9',
                 letterSpacing: '-0.02em'
               }}
             >
               Assemble & Conquer
             </h2>
 
-            {/* Section Subtitle - Clean and optimized */}
-            <div className="w-full flex justify-center mb-8 sm:mb-10 md:mb-16">
+            {/* Section Subtitle - Enhanced responsive design */}
+            <div className="w-full flex justify-center mb-6 sm:mb-8 md:mb-12 lg:mb-16">
               <p 
-                className="text-center px-4 relative z-10"
+                className="text-center px-3 sm:px-4 md:px-6 relative z-10"
                 style={{
                   color: '#000000',
-                  fontSize: 'clamp(16px, 4vw, 36px)',
+                  fontSize: 'clamp(16px, 3.5vw, 32px)',
                   fontWeight: '500',
                   fontFamily: 'Outreque, sans-serif',
-                  lineHeight: '1.4',
+                  lineHeight: '1.5',
                   opacity: '0.9',
-                  maxWidth: 'clamp(320px, 80vw, 800px)',
+                  maxWidth: 'clamp(320px, 85vw, 750px)',
                   margin: '0 auto'
                 }}
               >
@@ -379,7 +382,7 @@ const LandingPage = memo(() => {
               </p>
             </div>
 
-            {/* CTA Button */}
+            {/* CTA Button - Better responsive positioning */}
             <div className="flex justify-center items-center relative z-10">
               <CTAButton
                 onClick={handleJoinTeam}
@@ -392,18 +395,19 @@ const LandingPage = memo(() => {
           </div>
         </section>
 
-        {/* FOOTER - Enhanced styling */}
+        {/* FOOTER - Enhanced responsive styling */}
         <footer 
-          className="relative flex justify-center items-center py-8 sm:py-10 md:py-12 z-10 px-2 sm:px-4 border-t border-gray-200/50" 
+          className="relative flex justify-center items-center py-6 sm:py-8 md:py-10 lg:py-12 z-10 px-3 sm:px-4 border-t border-gray-200/50" 
           role="contentinfo"
         >
           <p 
             className="text-black text-center"
             style={{
-              fontSize: 'clamp(14px, 3vw, 20px)',
+              fontSize: 'clamp(14px, 2.5vw, 18px)',
               fontWeight: '400',
               fontFamily: 'Outreque, sans-serif',
-              opacity: '0.7'
+              opacity: '0.7',
+              lineHeight: '1.5'
             }}
           >
             © 2025 CodeBattle. Made with ⚡ and too much caffeine.
