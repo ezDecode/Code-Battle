@@ -386,7 +386,7 @@ export default function Dashboard() {
           </div>
 
           {/* Team Section */}
-          {teamData ? (
+          {/* {teamData ? (
             <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
@@ -425,7 +425,7 @@ export default function Dashboard() {
                 </div>
               </div>
             </div>
-          )}
+          )} */}
 
           {/* Modals */}
           {modals.teamCreation && <TeamCreationModal />}
