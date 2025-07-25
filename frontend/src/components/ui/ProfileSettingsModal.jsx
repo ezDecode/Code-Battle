@@ -171,11 +171,11 @@ export function ProfileSettingsModal() {
           onClick={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="bg-gradient-to-r from-indigo-500 to-purple-600 p-6 text-white">
+          <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 text-white">
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-2xl font-bold">Profile Settings</h2>
-                <p className="text-indigo-100 mt-1">Manage your account and preferences</p>
+                <p className="text-red-100 mt-1">Manage your account and preferences</p>
               </div>
               <button
                 onClick={handleClose}
@@ -198,7 +198,7 @@ export function ProfileSettingsModal() {
                       onClick={() => setActiveTab(tab.id)}
                       className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-left transition-colors ${
                         activeTab === tab.id
-                          ? 'bg-indigo-500 text-white'
+                          ? 'bg-red-500 text-white'
                           : 'text-gray-700 hover:bg-gray-200'
                       }`}
                     >
@@ -219,7 +219,7 @@ export function ProfileSettingsModal() {
                   {/* Avatar Section */}
                   <div className="flex items-center space-x-6">
                     <div className="relative">
-                      <div className="h-20 w-20 rounded-full bg-gradient-to-r from-blue-500 to-indigo-500 flex items-center justify-center text-white font-bold text-xl overflow-hidden">
+                      <div className="h-20 w-20 rounded-full bg-gradient-to-r from-red-500 to-red-600 flex items-center justify-center text-white font-bold text-xl overflow-hidden">
                         {avatarPreview ? (
                           <img src={avatarPreview} alt="Avatar preview" className="w-full h-full object-cover" />
                         ) : user?.avatar ? (
@@ -228,7 +228,7 @@ export function ProfileSettingsModal() {
                           user?.name?.split(' ').map(n => n[0]).join('') || 'U'
                         )}
                       </div>
-                      <label className="absolute bottom-0 right-0 bg-indigo-500 text-white p-1 rounded-full cursor-pointer hover:bg-indigo-600 transition-colors">
+                      <label className="absolute bottom-0 right-0 bg-red-500 text-white p-1 rounded-full cursor-pointer hover:bg-red-600 transition-colors">
                         <Camera className="h-4 w-4" />
                         <input
                           type="file"
@@ -254,7 +254,7 @@ export function ProfileSettingsModal() {
                         type="text"
                         value={formData.name}
                         onChange={(e) => handleInputChange('name', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="Enter your full name"
                       />
                     </div>
@@ -267,8 +267,9 @@ export function ProfileSettingsModal() {
                         type="email"
                         value={formData.email}
                         onChange={(e) => handleInputChange('email', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="Enter your email"
+                        noValidate
                       />
                     </div>
 
@@ -280,7 +281,7 @@ export function ProfileSettingsModal() {
                         type="text"
                         value={formData.leetcodeUsername}
                         onChange={(e) => handleInputChange('leetcodeUsername', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="Your LeetCode username"
                       />
                     </div>
@@ -293,7 +294,7 @@ export function ProfileSettingsModal() {
                         type="text"
                         value={formData.githubUsername}
                         onChange={(e) => handleInputChange('githubUsername', e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                         placeholder="Your GitHub username"
                       />
                     </div>
@@ -307,7 +308,7 @@ export function ProfileSettingsModal() {
                       value={formData.bio}
                       onChange={(e) => handleInputChange('bio', e.target.value)}
                       rows={4}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent"
                       placeholder="Tell us about yourself..."
                     />
                   </div>
@@ -327,7 +328,7 @@ export function ProfileSettingsModal() {
                       <button
                         onClick={() => handleInputChange('isPublic', !formData.isPublic)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.isPublic ? 'bg-indigo-500' : 'bg-gray-300'
+                          formData.isPublic ? 'bg-red-500' : 'bg-gray-300'
                         }`}
                       >
                         <span
@@ -346,7 +347,7 @@ export function ProfileSettingsModal() {
                       <button
                         onClick={() => handleInputChange('emailNotifications', !formData.emailNotifications)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.emailNotifications ? 'bg-indigo-500' : 'bg-gray-300'
+                          formData.emailNotifications ? 'bg-red-500' : 'bg-gray-300'
                         }`}
                       >
                         <span
@@ -365,7 +366,7 @@ export function ProfileSettingsModal() {
                       <button
                         onClick={() => handleInputChange('darkMode', !formData.darkMode)}
                         className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                          formData.darkMode ? 'bg-indigo-500' : 'bg-gray-300'
+                          formData.darkMode ? 'bg-red-500' : 'bg-gray-300'
                         }`}
                       >
                         <span
@@ -460,7 +461,7 @@ export function ProfileSettingsModal() {
                   <button
                     onClick={handleSaveProfile}
                     disabled={isLoading}
-                    className="px-6 py-3 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-medium disabled:opacity-50 flex items-center space-x-2"
+                    className="px-6 py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors font-medium disabled:opacity-50 flex items-center space-x-2"
                   >
                     {isLoading ? (
                       <>

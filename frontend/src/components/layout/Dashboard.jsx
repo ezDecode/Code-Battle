@@ -33,6 +33,21 @@ export default function Dashboard() {
   const { user, team, dailyChallenge, leaderboard, modals, userStats, loading } = state;
   const toast = useToast();
   const [refreshingChallenge, setRefreshingChallenge] = useState(false);
+  const [lastUserId, setLastUserId] = useState(null);
+
+  // Validate user session and clear cache if user changed
+  useEffect(() => {
+    if (user?.id && lastUserId && user.id !== lastUserId) {
+      console.log('🔄 User change detected in Dashboard, clearing cached data');
+      // Clear any component-level cache
+      setRefreshingChallenge(false);
+      // Force refresh of dashboard data
+      actions.fetchDashboardData();
+    }
+    if (user?.id) {
+      setLastUserId(user.id);
+    }
+  }, [user?.id, lastUserId, actions]);
 
   const handleCreateTeam = () => actions.toggleModal('teamCreation', true);
   const handleViewLeaderboard = () => actions.toggleModal('leaderboard', true);

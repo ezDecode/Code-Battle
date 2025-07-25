@@ -185,7 +185,8 @@ router.get('/me', async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
-    res.json({
+    // Add timestamp to help with cache validation
+    const responseData = {
       id: user._id,
       leetcodeUsername: user.leetcodeUsername,
       displayName: user.displayName,
@@ -198,14 +199,46 @@ router.get('/me', async (req, res) => {
       onboardingCompleted: user.onboardingCompleted || false,
       avatar: user.avatar,
       leetcodeData: user.leetcodeData,
-      submitStats: user.submitStats
-    });
+      submitStats: user.submitStats,
+      lastActive: user.lastActive,
+      fetchedAt: new Date().toISOString() // Add timestamp for cache validation
+    };
+
+    res.json(responseData);
   } catch (error) {
     console.error('Get current user error:', error);
     if (error.name === 'JsonWebTokenError') {
       return res.status(401).json({ message: 'Invalid token' });
     }
     res.status(500).json({ message: 'Server error' });
+  }
+});
+
+// @route   POST /api/auth/logout
+// @desc    Logout user (clear session)
+// @access  Private
+router.post('/logout', async (req, res) => {
+  try {
+    // If using sessions, destroy the session
+    if (req.session) {
+      req.session.destroy((err) => {
+        if (err) {
+          console.error('Session destruction error:', err);
+        }
+      });
+    }
+    
+    // Clear any server-side caches if applicable
+    // Note: With JWT, there's no server-side session to clear,
+    // but we can perform cleanup operations here
+    
+    res.json({ 
+      message: 'Logged out successfully',
+      timestamp: new Date().toISOString()
+    });
+  } catch (error) {
+    console.error('Logout error:', error);
+    res.status(500).json({ message: 'Server error during logout' });
   }
 });
 

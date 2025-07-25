@@ -14,6 +14,9 @@ router.get('/', auth, async (req, res) => {
       return res.status(404).json({ message: 'User not found' });
     }
 
+    // Add user validation timestamp
+    const currentTime = new Date().toISOString();
+    
     // Prepare user stats with real data
     const userStats = {
       problemsSolved: user.leetcodeData?.submitStats?.easy + user.leetcodeData?.submitStats?.medium + user.leetcodeData?.submitStats?.hard || 0,
@@ -21,7 +24,9 @@ router.get('/', auth, async (req, res) => {
       currentStreak: user.streak || 0,
       weeklyProgress: 0, // TODO: Calculate weekly progress
       rank: user.leetcodeData?.ranking || 0,
-      rating: user.totalScore || 0
+      rating: user.totalScore || 0,
+      userId: user._id, // Add user ID for validation
+      fetchedAt: currentTime // Add timestamp for cache validation
     };
 
     // Fetch today's LeetCode daily challenge

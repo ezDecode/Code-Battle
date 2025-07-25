@@ -66,6 +66,15 @@ export function LeetCodeOnboardingModal({ isOpen, onClose, onComplete }) {
         api.setToken(token);
       }
 
+      // Validate current user before completing onboarding
+      try {
+        const currentUser = await api.auth.getCurrentUser();
+        console.log('Current user validated for onboarding:', currentUser.email);
+      } catch (validationError) {
+        console.error('User validation failed during onboarding:', validationError);
+        throw new Error('Session validation failed. Please try logging in again.');
+      }
+
       console.log('Completing onboarding with LeetCode username:', leetcodeUsername.trim());
       const user = await api.auth.completeOnboarding(leetcodeUsername.trim(), api.token);
       
@@ -73,6 +82,14 @@ export function LeetCodeOnboardingModal({ isOpen, onClose, onComplete }) {
       if (user.token) {
         api.setToken(user.token);
       }
+
+      // Clear any cached data to ensure fresh user data
+      sessionStorage.clear();
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('user_') || key.startsWith('leetcode_') || key.startsWith('dashboard_')) {
+          localStorage.removeItem(key);
+        }
+      });
 
       onComplete(user);
     } catch (error) {

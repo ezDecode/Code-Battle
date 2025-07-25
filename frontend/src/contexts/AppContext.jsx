@@ -102,8 +102,11 @@ const appReducer = (state, action) => {
       };
       
     case ActionTypes.LOGOUT:
+      // Complete state reset - return fresh initial state
       return {
-        ...initialState
+        ...initialState,
+        // Preserve any notifications that might be showing
+        notifications: []
       };
       
     case ActionTypes.UPDATE_USER:
@@ -287,9 +290,31 @@ export const AppProvider = ({ children }) => {
       return;
     }
     
+    // Validate current user matches expected user
+    if (state.user?.id) {
+      try {
+        const currentUser = await api.auth.getCurrentUser();
+        if (currentUser.id !== state.user.id) {
+          console.log('🔄 User mismatch detected, forcing logout and refresh');
+          actions.logout();
+          return;
+        }
+      } catch (userValidationError) {
+        console.log('⚠️ User validation failed, continuing with dashboard fetch');
+      }
+    }
+    
     dispatch({ type: ActionTypes.FETCH_DATA_START });
     try {
       const data = await api.dashboard.getData();
+      
+      // Validate that the dashboard data belongs to the current user
+      if (data.userStats?.userId && state.user?.id && data.userStats.userId !== state.user.id) {
+        console.log('🔄 Dashboard data user mismatch detected, forcing logout');
+        actions.logout();
+        return;
+      }
+      
       dispatch({ type: ActionTypes.FETCH_DATA_SUCCESS, payload: data });
     } catch (error) {
       console.error('❌ Failed to fetch dashboard data:', error);
@@ -306,7 +331,7 @@ export const AppProvider = ({ children }) => {
       
       dispatch({ type: ActionTypes.FETCH_DATA_FAILURE, payload: error.message });
     }
-  }, [dispatch, state.isAuthenticated, state.loading]); // Include relevant dependencies
+  }, [dispatch, state.isAuthenticated, state.loading, state.user?.id]); // Include relevant dependencies
 
   // Actions
   const actions = {
@@ -314,8 +339,19 @@ export const AppProvider = ({ children }) => {
     login: async (credentials) => {
       dispatch({ type: ActionTypes.LOGIN_START });
       try {
+        // Clear any existing cached data before login
+        sessionStorage.clear();
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('user_') || key.startsWith('leetcode_') || key.startsWith('dashboard_')) {
+            localStorage.removeItem(key);
+          }
+        });
+        
         const user = await api.auth.login(credentials);
         dispatch({ type: ActionTypes.LOGIN_SUCCESS, payload: user });
+        
+        // Reset fetch flag to ensure fresh data
+        hasFetchedDataRef.current = false;
         
         // Fetch initial data after login
         setTimeout(() => fetchDashboardData(), 100);
@@ -357,12 +393,30 @@ export const AppProvider = ({ children }) => {
     },
 
     logout: () => {
+      // Clear all API tokens and storage
       api.auth.logout();
+      
+      // Force complete state reset to initial values
       dispatch({ type: ActionTypes.LOGOUT });
       
-      // Clean up OAuth processing flags
-      sessionStorage.removeItem('processedOAuthToken');
-      sessionStorage.removeItem('oauthCallback');
+      // Clear any cached data in localStorage/sessionStorage
+      localStorage.removeItem('authToken');
+      sessionStorage.clear(); // Clear all session storage
+      
+      // Clear any persistent user data from localStorage
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('user_') || key.startsWith('leetcode_') || key.startsWith('auth_') || key.startsWith('dashboard_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
+      // Reset fetch flags
+      hasFetchedDataRef.current = false;
+      
+      // Force reload of the current page to ensure complete cleanup
+      setTimeout(() => {
+        window.location.reload();
+      }, 100);
       
       actions.addNotification({
         type: 'info',
@@ -407,8 +461,19 @@ export const AppProvider = ({ children }) => {
 
     // Complete OAuth onboarding
     completeOAuthOnboarding: async (user) => {
+      // Clear any cached data before setting new user
+      sessionStorage.clear();
+      Object.keys(localStorage).forEach(key => {
+        if (key.startsWith('user_') || key.startsWith('leetcode_') || key.startsWith('dashboard_')) {
+          localStorage.removeItem(key);
+        }
+      });
+      
       dispatch({ type: ActionTypes.LOGIN_SUCCESS, payload: user });
       dispatch({ type: ActionTypes.SET_OAUTH_PENDING, payload: false });
+      
+      // Reset fetch flag to ensure fresh data
+      hasFetchedDataRef.current = false;
       
       actions.addNotification({
         type: 'success',
@@ -555,6 +620,37 @@ export const AppProvider = ({ children }) => {
 
     return () => clearTimeout(timeoutId);
   }, [state.isAuthenticated, state.loading]);
+
+  // Periodic user validation to detect session mismatches
+  useEffect(() => {
+    if (!state.isAuthenticated || !state.user?.id) {
+      return;
+    }
+
+    const validateUserSession = async () => {
+      try {
+        const currentUser = await api.auth.getCurrentUser();
+        if (currentUser.id !== state.user.id) {
+          console.log('🔄 User session mismatch detected, forcing logout');
+          actions.logout();
+        }
+      } catch (error) {
+        // If validation fails, user might need to re-authenticate
+        console.log('⚠️ User session validation failed:', error.message);
+        if (error.message?.includes('401') || error.message?.includes('authorization')) {
+          actions.logout();
+        }
+      }
+    };
+
+    // Validate immediately
+    validateUserSession();
+
+    // Set up periodic validation (every 5 minutes)
+    const validationInterval = setInterval(validateUserSession, 5 * 60 * 1000);
+
+    return () => clearInterval(validationInterval);
+  }, [state.isAuthenticated, state.user?.id, actions]);
 
   // Reset fetch flag when user logs out
   useEffect(() => {

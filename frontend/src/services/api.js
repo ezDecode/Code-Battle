@@ -23,6 +23,20 @@ class ApiService {
     // Also clean up OAuth processing flags
     sessionStorage.removeItem('processedOAuthToken');
     sessionStorage.removeItem('oauthCallback');
+    // Clear any cached user data
+    sessionStorage.removeItem('cachedUserData');
+    sessionStorage.removeItem('cachedLeetCodeData');
+    // Clear any other auth-related storage
+    Object.keys(localStorage).forEach(key => {
+      if (key.startsWith('user_') || key.startsWith('leetcode_') || key.startsWith('auth_')) {
+        localStorage.removeItem(key);
+      }
+    });
+    Object.keys(sessionStorage).forEach(key => {
+      if (key.startsWith('user_') || key.startsWith('leetcode_') || key.startsWith('auth_')) {
+        sessionStorage.removeItem(key);
+      }
+    });
   }
 
     // Generic request method with retry logic
@@ -154,7 +168,12 @@ class ApiService {
     },
 
     logout: async () => {
-      await this.request('/auth/logout', { method: 'POST' });
+      try {
+        await this.request('/auth/logout', { method: 'POST' });
+      } catch (error) {
+        // Continue with logout even if server request fails
+        console.log('Server logout request failed, but continuing with client logout');
+      }
       this.removeToken();
     },
 
