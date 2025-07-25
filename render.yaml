@@ -1,0 +1,220 @@
+# Render Blueprint for Code Battle Application
+# This file defines the infrastructure for deploying the Code Battle backend to Render
+
+services:
+  # Main Backend Web Service
+  - name: codebattle-backend
+    type: web
+    runtime: node
+    plan: starter  # Can be upgraded to standard/pro for production
+    region: oregon  # Choose region closest to your users
+    
+    # Build Configuration
+    buildCommand: cd backend && npm ci
+    startCommand: cd backend && npm start
+    
+    # Repository Configuration
+    rootDir: .  # Since render.yaml is in root and backend is in subfolder
+    buildFilter:
+      paths:
+        - backend/**  # Only rebuild when backend changes
+      ignoredPaths:
+        - backend/**/*.md
+        - backend/**/*.test.js
+        - backend/docs/**
+    
+    # Auto-deploy configuration
+    autoDeployTrigger: commit  # Deploy on every commit to main branch
+    
+    # Health check for zero-downtime deploys
+    healthCheckPath: /
+    
+    # Scaling (can be adjusted based on needs)
+    numInstances: 1
+    # For production, consider autoscaling:
+    # scaling:
+    #   minInstances: 1
+    #   maxInstances: 3
+    #   targetCPUPercent: 70
+    
+    # Environment Variables
+    envVars:
+      # Application Configuration
+      - key: NODE_ENV
+        value: production
+      
+      - key: PORT
+        value: 10000  # Render default port
+      
+      # Frontend URL (update with your actual frontend domain)
+      - key: FRONTEND_URL
+        value: https://your-frontend-domain.onrender.com
+      
+      # MongoDB Configuration (using external MongoDB Atlas)
+      - key: MONGODB_URI
+        sync: false  # Prompt for secure database URL during deployment
+      
+      # Security Secrets (will be prompted during setup)
+      - key: JWT_SECRET
+        generateValue: true  # Render will generate a secure random value
+      
+      - key: SESSION_SECRET
+        generateValue: true  # Render will generate a secure random value
+      
+      # OAuth Configuration (will be prompted during setup)
+      - key: GOOGLE_CLIENT_ID
+        sync: false
+      
+      - key: GOOGLE_CLIENT_SECRET
+        sync: false
+      
+      - key: GITHUB_CLIENT_ID
+        sync: false
+      
+      - key: GITHUB_CLIENT_SECRET
+        sync: false
+      
+      # OAuth Redirect URIs (update with your actual backend domain)
+      - key: GOOGLE_REDIRECT_URI
+        value: https://codebattle-backend.onrender.com/api/auth/google/callback
+      
+      - key: GITHUB_REDIRECT_URI
+        value: https://codebattle-backend.onrender.com/api/auth/github/callback
+      
+      # LeetCode Service Configuration
+      - key: LEETCODE_RATE_LIMIT_DELAY
+        value: "2000"  # More conservative rate limiting for production
+      
+      - key: LEETCODE_API_BASE_URL
+        value: "https://leetcode.com/api"
+      
+      # CORS Configuration
+      - key: CORS_ORIGIN
+        value: https://your-frontend-domain.onrender.com
+    
+    # Add environment variables from shared group
+    - fromGroup: codebattle-shared-config
+
+  # Background Worker for Daily Challenge Monitoring
+  - name: codebattle-daily-monitor
+    type: worker
+    runtime: node
+    plan: starter
+    region: oregon
+    
+    # Build Configuration
+    buildCommand: cd backend && npm ci
+    startCommand: cd backend && npm run monitor:daily-problem
+    
+    # Repository Configuration
+    rootDir: .
+    buildFilter:
+      paths:
+        - backend/scripts/monitorDailyProblem.js
+        - backend/services/**
+        - backend/models/**
+        - backend/package*.json
+    
+    # Auto-deploy configuration
+    autoDeployTrigger: commit
+    
+    # Environment Variables (inherit from main service)
+    envVars:
+      - key: NODE_ENV
+        value: production
+      
+      - key: MONGODB_URI
+        sync: false
+      
+      - key: JWT_SECRET
+        generateValue: true
+      
+      - key: LEETCODE_RATE_LIMIT_DELAY
+        value: "3000"  # Even more conservative for background tasks
+      
+      - key: LEETCODE_API_BASE_URL
+        value: "https://leetcode.com/api"
+    
+    # Add shared configuration
+    - fromGroup: codebattle-shared-config
+
+  # Cron Job for Daily Challenge Updates
+  - name: codebattle-daily-cron
+    type: cron
+    runtime: node
+    plan: starter
+    region: oregon
+    
+    # Run daily at 00:01 UTC (adjust timezone as needed)
+    schedule: "1 0 * * *"
+    
+    # Build Configuration
+    buildCommand: cd backend && npm ci
+    startCommand: cd backend && npm run check:daily-problem
+    
+    # Repository Configuration
+    rootDir: .
+    buildFilter:
+      paths:
+        - backend/scripts/checkDailyProblem.js
+        - backend/services/**
+        - backend/models/**
+        - backend/package*.json
+    
+    # Environment Variables
+    envVars:
+      - key: NODE_ENV
+        value: production
+      
+      - key: MONGODB_URI
+        sync: false
+      
+      - key: LEETCODE_RATE_LIMIT_DELAY
+        value: "5000"  # Very conservative for scheduled tasks
+      
+      - key: LEETCODE_API_BASE_URL
+        value: "https://leetcode.com/api"
+    
+    # Add shared configuration
+    - fromGroup: codebattle-shared-config
+
+# Environment Variable Groups
+envVarGroups:
+  - name: codebattle-shared-config
+    envVars:
+      # Rate limiting configuration
+      - key: RATE_LIMIT_WINDOW_MS
+        value: "900000"  # 15 minutes
+      
+      - key: RATE_LIMIT_MAX_REQUESTS
+        value: "100"
+      
+      # Security configuration
+      - key: BCRYPT_SALT_ROUNDS
+        value: "12"
+      
+      # LeetCode API configuration (redundant but keeping for consistency)
+      - key: LEETCODE_API_BASE_URL
+        value: "https://leetcode.com/api"
+
+# Database Configuration (Optional - if using Render PostgreSQL instead of MongoDB Atlas)
+# Note: Currently the app uses MongoDB, so you'll likely use MongoDB Atlas
+# If you want to migrate to PostgreSQL later, uncomment and configure:
+#
+# databases:
+#   - name: codebattle-db
+#     plan: basic-256mb  # Start small, can be upgraded
+#     region: oregon
+#     postgresMajorVersion: "16"
+#     databaseName: codebattle
+#     user: codebattle_user
+#     
+#     # IP Access Control (adjust as needed)
+#     ipAllowList:
+#       - source: 0.0.0.0/0  # Allow all (use more restrictive in production)
+#         description: "All external connections"
+
+# Preview Environment Configuration
+previews:
+  generation: manual  # Enable manual preview environments for testing PRs
+  expireAfterDays: 7  # Clean up previews after 7 days
