@@ -1,6 +1,6 @@
 // API service for CodeBattle
 const API_BASE_URL = process.env.NODE_ENV === 'production' 
-  ? 'https://your-production-api.com/api' 
+  ? 'https://code-battle-nlyy.onrender.com/api' 
   : 'http://localhost:5000/api';
 
 class ApiService {
