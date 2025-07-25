@@ -96,6 +96,7 @@ CTAButton.displayName = 'CTAButton';
 const LandingPage = memo(() => {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   // Modal handlers
   const handleSignIn = useCallback(() => {
@@ -118,6 +119,44 @@ const LandingPage = memo(() => {
     setShowAuthModal(true);
   }, []);
 
+  const toggleMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(prev => !prev);
+  }, []);
+
+  const closeMobileMenu = useCallback(() => {
+    setIsMobileMenuOpen(false);
+  }, []);
+
+  // Close mobile menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (isMobileMenuOpen && !event.target.closest('.mobile-menu-container')) {
+        closeMobileMenu();
+      }
+    };
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape' && isMobileMenuOpen) {
+        closeMobileMenu();
+      }
+    };
+
+    if (isMobileMenuOpen) {
+      document.addEventListener('click', handleClickOutside);
+      document.addEventListener('keydown', handleKeyDown);
+      // Prevent body scroll when menu is open
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+
+    return () => {
+      document.removeEventListener('click', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isMobileMenuOpen, closeMobileMenu]);
+
   // Initialize optimized smooth scrolling
   useSmoothScroll();
 
@@ -126,14 +165,23 @@ const LandingPage = memo(() => {
       className="text-black min-h-screen w-full overflow-x-hidden"
       style={{ backgroundColor: '#F8F8F8' }}
     >
-      {/* Skip link for accessibility */}
-      <a 
-        href="#main-content" 
-        className="sr-only focus:not-sr-only absolute top-4 left-4 bg-white text-black px-4 py-2 rounded-lg z-50 focus:outline-none focus:ring-2 focus:ring-red-500 shadow-lg"
-        style={{ fontFamily: 'Outreque, sans-serif' }}
-      >
-        Skip to main content
-      </a>
+      {/* CSS for mobile menu animation */}
+      <style jsx>{`
+        @keyframes slideDown {
+          from {
+            opacity: 0;
+            transform: translateY(-10px) scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        
+        .mobile-menu-container {
+          position: relative;
+        }
+      `}</style>
 
       {/* Main container - Enhanced responsive layout with optimal tablet experience */}
       <div 
@@ -164,33 +212,113 @@ const LandingPage = memo(() => {
 
             {/* Right Navigation - Improved spacing and touch targets */}
             <nav className="flex items-center gap-2 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8" role="navigation">
-              <button
-                onClick={handleSignIn}
-                className="text-black font-bold hover:opacity-70 focus:opacity-70 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-opacity duration-300 rounded-lg px-3 py-2 md:px-4"
-                style={{
-                  fontSize: 'clamp(16px, 3.5vw, 24px)',
-                  fontWeight: '700',
-                  fontFamily: 'Outreque, sans-serif',
-                  minHeight: '44px' // Ensure touch target
-                }}
-                aria-label="Sign in to your account"
-              >
-                Sign In
-              </button>
+              {/* Desktop Navigation */}
+              <div className="hidden sm:flex items-center gap-2 sm:gap-4 md:gap-5 lg:gap-6 xl:gap-8">
+                <button
+                  onClick={handleSignIn}
+                  className="text-black font-bold hover:opacity-70 focus:opacity-70 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-opacity duration-300 rounded-lg px-3 py-2 md:px-4"
+                  style={{
+                    fontSize: 'clamp(16px, 3.5vw, 24px)',
+                    fontWeight: '700',
+                    fontFamily: 'Outreque, sans-serif',
+                    minHeight: '44px' // Ensure touch target
+                  }}
+                  aria-label="Sign in to your account"
+                >
+                  Sign In
+                </button>
 
-              <CTAButton
-                onClick={handleGetStarted}
-                ariaLabel="Get started with CodeBattle for free"
-                className="shadow-lg hover:shadow-xl"
-              >
-                Get Started Free
-              </CTAButton>
+                <CTAButton
+                  onClick={handleGetStarted}
+                  ariaLabel="Get started with CodeBattle for free"
+                  className="shadow-lg hover:shadow-xl"
+                >
+                  Get Started Free
+                </CTAButton>
+              </div>
+
+              {/* Mobile Hamburger Menu */}
+              <div className="sm:hidden mobile-menu-container">
+                <button
+                  onClick={toggleMobileMenu}
+                  className="flex flex-col justify-center items-center w-10 h-10 bg-transparent border-none cursor-pointer rounded-lg p-1 transition-all duration-300"
+                  aria-label="Toggle mobile menu"
+                  aria-expanded={isMobileMenuOpen}
+                >
+                  {/* Two-line hamburger design */}
+                  <div className="flex flex-col gap-1.5 w-6">
+                    <div 
+                      className={`h-0.5 bg-black transition-all duration-300 ease-in-out ${
+                        isMobileMenuOpen ? 'rotate-45 translate-y-1 w-6' : 'w-6'
+                      }`}
+                      style={{ transformOrigin: 'center' }}
+                    />
+                    <div 
+                      className={`h-0.5 bg-black transition-all duration-300 ease-in-out ${
+                        isMobileMenuOpen ? '-rotate-45 -translate-y-1 w-6' : 'w-6'
+                      }`}
+                      style={{ transformOrigin: 'center' }}
+                    />
+                  </div>
+                </button>
+
+                {/* Mobile Menu Dropdown */}
+                {isMobileMenuOpen && (
+                  <div 
+                    className="absolute top-full right-0 mt-2 w-72 bg-white rounded-2xl shadow-2xl z-50 overflow-hidden"
+                    style={{
+                      animation: 'slideDown 0.3s ease-out',
+                      transformOrigin: 'top right',
+                      border: 'none',
+                      outline: 'none'
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {/* Mobile menu items */}
+                    <div className="p-6 space-y-5">
+                      <button
+                        onClick={() => {
+                          handleSignIn();
+                          closeMobileMenu();
+                        }}
+                        className="w-full text-left text-black font-bold hover:bg-gray-50 focus:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-all duration-200 rounded-lg px-4 py-3"
+                        style={{
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          fontFamily: 'Outreque, sans-serif',
+                          border: 'none'
+                        }}
+                      >
+                        Sign In
+                      </button>
+                      
+                      <div className="w-full">
+                        <button
+                          onClick={() => {
+                            handleGetStarted();
+                            closeMobileMenu();
+                          }}
+                          className="w-full py-4 px-6 bg-red-500 text-black font-bold rounded-2xl hover:bg-red-600 focus:bg-red-600 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-opacity-50 transition-all duration-200 shadow-lg hover:shadow-xl"
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: '700',
+                            fontFamily: 'Outreque, sans-serif',
+                            border: 'none',
+                            minHeight: '48px'
+                          }}
+                        >
+                          Get Started Free
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
             </nav>
           </header>
 
           {/* Hero Content - Enhanced responsive spacing and typography */}
-          <main 
-            id="main-content" 
+          <main  
             className="flex-1 flex flex-col items-center justify-center text-center px-2 sm:px-3 md:px-4 lg:px-6"
             role="main"
             style={{ paddingTop: '1.5rem', paddingBottom: '1.5rem' }}
