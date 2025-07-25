@@ -7,7 +7,7 @@ services:
     type: web
     runtime: node
     plan: starter  # Can be upgraded to standard/pro for production
-    region: oregon  # Choose region closest to your users
+    region: singapore  # Choose region closest to your users
     
     # Build Configuration
     buildCommand: cd backend && npm ci
@@ -50,6 +50,13 @@ services:
       - key: FRONTEND_URL
         value: https://your-frontend-domain.onrender.com
       
+      # OAuth Success/Failure Redirects
+      - key: OAUTH_SUCCESS_REDIRECT
+        value: https://your-frontend-domain.onrender.com/dashboard
+      
+      - key: OAUTH_FAILURE_REDIRECT
+        value: https://your-frontend-domain.onrender.com/?error=oauth_failed
+      
       # MongoDB Configuration (using external MongoDB Atlas)
       - key: MONGODB_URI
         sync: false  # Prompt for secure database URL during deployment
@@ -86,7 +93,7 @@ services:
         value: "2000"  # More conservative rate limiting for production
       
       - key: LEETCODE_API_BASE_URL
-        value: "https://leetcode.com/api"
+        value: "https://leetcode.com/graphql"
       
       # CORS Configuration
       - key: CORS_ORIGIN
@@ -100,7 +107,7 @@ services:
     type: worker
     runtime: node
     plan: starter
-    region: oregon
+    region: singapore
     
     # Build Configuration
     buildCommand: cd backend && npm ci
@@ -133,7 +140,7 @@ services:
         value: "3000"  # Even more conservative for background tasks
       
       - key: LEETCODE_API_BASE_URL
-        value: "https://leetcode.com/api"
+        value: "https://leetcode.com/graphql"
     
     # Add shared configuration
     - fromGroup: codebattle-shared-config
@@ -143,7 +150,7 @@ services:
     type: cron
     runtime: node
     plan: starter
-    region: oregon
+    region: singapore
     
     # Run daily at 00:01 UTC (adjust timezone as needed)
     schedule: "1 0 * * *"
@@ -173,7 +180,7 @@ services:
         value: "5000"  # Very conservative for scheduled tasks
       
       - key: LEETCODE_API_BASE_URL
-        value: "https://leetcode.com/api"
+        value: "https://leetcode.com/graphql"
     
     # Add shared configuration
     - fromGroup: codebattle-shared-config
@@ -193,9 +200,9 @@ envVarGroups:
       - key: BCRYPT_SALT_ROUNDS
         value: "12"
       
-      # LeetCode API configuration (redundant but keeping for consistency)
+      # LeetCode API configuration
       - key: LEETCODE_API_BASE_URL
-        value: "https://leetcode.com/api"
+        value: "https://leetcode.com/graphql"
 
 # Database Configuration (Optional - if using Render PostgreSQL instead of MongoDB Atlas)
 # Note: Currently the app uses MongoDB, so you'll likely use MongoDB Atlas
@@ -204,7 +211,7 @@ envVarGroups:
 # databases:
 #   - name: codebattle-db
 #     plan: basic-256mb  # Start small, can be upgraded
-#     region: oregon
+#     region: singapore
 #     postgresMajorVersion: "16"
 #     databaseName: codebattle
 #     user: codebattle_user
