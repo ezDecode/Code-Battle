@@ -23,7 +23,15 @@ export default defineConfig([
       },
     },
     rules: {
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['error', { varsIgnorePattern: '^(motion|[A-Z_])' }],
+      'react-refresh/only-export-components': 'off',
     },
+  },
+  {
+    files: ['vite.config.js', 'tailwind.config.js', 'eslint.config.js'],
+    languageOptions: {
+      globals: globals.node,
+    },
+    rules: {},
   },
 ])

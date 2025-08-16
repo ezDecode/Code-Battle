@@ -33,9 +33,8 @@ export function LeetCodeOnboardingModal({ isOpen, onClose, onComplete }) {
         setVerificationStatus('invalid');
         setError('LeetCode username not found');
       }
-    } catch (error) {
+    } catch {
       setVerificationStatus('invalid');
-      setError('Error verifying username. Please try again.');
     } finally {
       setIsVerifying(false);
     }
@@ -92,8 +91,8 @@ export function LeetCodeOnboardingModal({ isOpen, onClose, onComplete }) {
       });
 
       onComplete(user);
-    } catch (error) {
-      console.error('Onboarding completion error:', error);
+    } catch {
+      console.error('Onboarding completion error:');
       setError(error.message || 'Failed to complete onboarding');
     } finally {
       setIsCompleting(false);

@@ -70,9 +70,8 @@ function AuthModal({ mode, onClose, isOpen }) {
         setLeetcodeVerified(false);
         setError('LeetCode username not found. Please check and try again.');
       }
-    } catch (error) {
+    } catch {
       setLeetcodeVerified(false);
-      setError('Error verifying LeetCode username. Please try again.');
     } finally {
       setIsVerifyingLeetcode(false);
     }

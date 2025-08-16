@@ -3,7 +3,7 @@ import React from 'react';
 class WebSocketService {
   constructor() {
     this.ws = null;
-    this.url = process.env.NODE_ENV === 'production' 
+    this.url = import.meta.env.PROD 
       ? 'wss://code-battle-nlyy.onrender.com' 
       : 'ws://localhost:5000';
     this.listeners = new Map();

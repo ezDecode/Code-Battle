@@ -45,16 +45,6 @@ export function TeamDetailsModal() {
     isPublic: true
   });
 
-  if (!modals.teamDetails) return null;
-
-  const closeModal = () => {
-    actions.toggleModal('teamDetails', false);
-    setInviteUsername("");
-    setVerificationResult(null);
-    setShowDeleteConfirm(false);
-    setShowEditModal(false);
-  };
-
   // Get real team data from context
   const { team } = state;
   const teamData = team || null;
@@ -75,12 +65,22 @@ export function TeamDetailsModal() {
     }
   }, [teamData, showEditModal]);
 
+  if (!modals.teamDetails) return null;
+
+  const closeModal = () => {
+    actions.toggleModal('teamDetails', false);
+    setInviteUsername("");
+    setVerificationResult(null);
+    setShowDeleteConfirm(false);
+    setShowEditModal(false);
+  };
+
   const handleInviteMember = async () => {
     if (!inviteUsername.trim() || !teamData) return;
     
     setIsInviting(true);
     try {
-      const response = await api.teams.inviteMember(teamData._id, inviteUsername.trim());
+      await api.teams.inviteMember(teamData._id, inviteUsername.trim());
       
       toast.success(`Successfully invited ${inviteUsername}!`, {
         title: 'Member Invited! 🎉'
@@ -107,7 +107,7 @@ export function TeamDetailsModal() {
     try {
       const result = await api.leetcode.verify(inviteUsername.trim());
       setVerificationResult(result);
-    } catch (error) {
+    } catch {
       setVerificationResult({ 
         valid: false, 
         message: 'LeetCode username not found' 
@@ -130,8 +130,8 @@ export function TeamDetailsModal() {
       // Refresh team data
       actions.fetchDashboardData();
       
-    } catch (error) {
-      toast.error(error.message || 'Failed to remove member', {
+    } catch {
+      toast.error('Failed to remove member', {
         title: 'Remove Failed'
       });
     }

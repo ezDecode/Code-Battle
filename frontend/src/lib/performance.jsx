@@ -212,7 +212,7 @@ export const LazyImage = memo(({
 
 // Bundle Size Analyzer (Development only)
 export const analyzeBundleSize = () => {
-  if (process.env.NODE_ENV === 'development') {
+  if (import.meta.env.DEV) {
     const chunks = [];
     
     // Analyze webpack chunks
@@ -265,7 +265,7 @@ export const withPerformanceProfiler = (Component, componentName) => {
       const endRender = performance.now();
       const renderTime = endRender - startRender;
       
-      if (process.env.NODE_ENV === 'development' && renderTime > 50) {
+      if (import.meta.env.DEV && renderTime > 50) {
         console.log(`${componentName} render time: ${renderTime.toFixed(2)}ms`);
       }
     });

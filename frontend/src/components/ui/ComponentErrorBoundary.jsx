@@ -13,7 +13,7 @@ class ComponentErrorBoundary extends React.Component {
     };
   }
 
-  static getDerivedStateFromError(error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
 
@@ -91,7 +91,7 @@ class ComponentErrorBoundary extends React.Component {
             </div>
           )}
 
-          {process.env.NODE_ENV === 'development' && (
+          {import.meta.env.DEV && (
             <details className="mt-4 w-full">
               <summary className="cursor-pointer text-sm text-red-500 hover:text-red-700">
                 Error Details (Development)
