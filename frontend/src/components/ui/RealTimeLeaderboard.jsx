@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Star, Wifi, WifiOff } from 'lucide-react';
+import { Trophy, TrendingUp, TrendingDown, Minus, Crown, Medal, Wifi, WifiOff } from 'lucide-react';
 import { useWebSocket } from '@/services/websocket';
 import { useApp } from '@/contexts/AppContext';
 
-const RankChangeIndicator = ({ change, previousRank, currentRank }) => {
+const RankChangeIndicator = ({ change }) => {
   if (change === 0) {
     return <Minus className="h-4 w-4 text-gray-400" />;
   }
@@ -92,8 +92,6 @@ const LeaderboardEntry = ({ user, rank, showRankChange = true, isCurrentUser = f
           {showRankChange && (
             <RankChangeIndicator 
               change={rankChange} 
-              previousRank={previousRank}
-              currentRank={rank}
             />
           )}
           

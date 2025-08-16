@@ -380,4 +380,4 @@ const ToastContainer = () => {
   );
 };
 
-export default ToastProvider;
+export default undefined;

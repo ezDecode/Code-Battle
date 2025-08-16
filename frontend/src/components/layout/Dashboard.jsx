@@ -30,7 +30,7 @@ import {
 
 export default function Dashboard() {
   const { state, actions } = useApp();
-  const { user, team, dailyChallenge, leaderboard, modals, userStats, loading } = state;
+  const { user, dailyChallenge, leaderboard, modals, userStats, loading } = state;
   const toast = useToast();
   const [refreshingChallenge, setRefreshingChallenge] = useState(false);
   const [lastUserId, setLastUserId] = useState(null);
@@ -49,7 +49,6 @@ export default function Dashboard() {
     }
   }, [user?.id, lastUserId, actions]);
 
-  const handleCreateTeam = () => actions.toggleModal('teamCreation', true);
   const handleViewLeaderboard = () => actions.toggleModal('leaderboard', true);
 
   const handleRefreshDailyChallenge = async () => {
@@ -57,7 +56,7 @@ export default function Dashboard() {
     try {
       await actions.fetchDashboardData();
       toast.show('Daily challenge refreshed!', 'success');
-    } catch (error) {
+    } catch {
       toast.show('Failed to refresh daily challenge', 'error');
     } finally {
       setRefreshingChallenge(false);
@@ -83,7 +82,6 @@ export default function Dashboard() {
     weeklyProgress: userStats?.weeklyProgress || 0
   };
 
-  const teamData = team || null;
   const safeLeaderboard = Array.isArray(leaderboard) ? leaderboard : [];
 
   return (
@@ -91,7 +89,7 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gray-50">
         <NavigationBar />
         
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <main role="main" aria-label="Dashboard" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           
           {/* Header Section */}
           <div className="mb-8">
@@ -431,7 +429,7 @@ export default function Dashboard() {
           {modals.teamCreation && <TeamCreationModal />}
           {modals.leaderboard && <LeaderboardModal />}
           {modals.profileSettings && <ProfileSettingsModal />}
-        </div>
+        </main>
       </div>
     </DashboardErrorBoundary>
   );

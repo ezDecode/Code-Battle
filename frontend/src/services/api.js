@@ -1,5 +1,5 @@
 // API service for CodeBattle
-const API_BASE_URL = process.env.NODE_ENV === 'production' 
+const API_BASE_URL = import.meta.env.PROD 
   ? 'https://code-battle-nlyy.onrender.com/api' 
   : 'http://localhost:5000/api';
 
@@ -170,7 +170,7 @@ class ApiService {
     logout: async () => {
       try {
         await this.request('/auth/logout', { method: 'POST' });
-      } catch (error) {
+      } catch {
         // Continue with logout even if server request fails
         console.log('Server logout request failed, but continuing with client logout');
       }

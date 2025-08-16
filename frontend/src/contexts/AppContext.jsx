@@ -201,7 +201,7 @@ export const AppProvider = ({ children }) => {
         const user = await api.auth.getCurrentUser();
         console.log('✅ Token is valid, logging in user:', user);
         dispatch({ type: ActionTypes.LOGIN_SUCCESS, payload: user });
-      } catch (error) {
+      } catch {
         console.log('❌ Token is invalid, removing...');
         // Clear the token from the api instance and localStorage
         localStorage.removeItem('authToken');
@@ -256,8 +256,8 @@ export const AppProvider = ({ children }) => {
       }, 0);
       
       return { needsOnboarding: false, user };
-    } catch (error) {
-      console.error('❌ OAuth callback error:', error);
+    } catch {
+      console.error('❌ OAuth callback error:');
       // Clean up on error
       sessionStorage.removeItem('processedOAuthToken');
       sessionStorage.removeItem('oauthCallback');
@@ -299,7 +299,7 @@ export const AppProvider = ({ children }) => {
           actions.logout();
           return;
         }
-      } catch (userValidationError) {
+      } catch {
         console.log('⚠️ User validation failed, continuing with dashboard fetch');
       }
     }
@@ -361,8 +361,8 @@ export const AppProvider = ({ children }) => {
           message: `Welcome back, ${user.displayName || user.name || 'User'}!`,
           duration: 5000
         });
-      } catch (error) {
-        dispatch({ type: ActionTypes.LOGIN_FAILURE, payload: error.message });
+      } catch {
+        dispatch({ type: ActionTypes.LOGIN_FAILURE, payload: 'Login failed' });
         actions.addNotification({
           type: 'error',
           message: 'Login failed. Please try again.',
@@ -382,8 +382,8 @@ export const AppProvider = ({ children }) => {
           message: 'Account created successfully!',
           duration: 5000
         });
-      } catch (error) {
-        dispatch({ type: ActionTypes.LOGIN_FAILURE, payload: error.message });
+      } catch {
+        dispatch({ type: ActionTypes.LOGIN_FAILURE, payload: 'Registration failed' });
         actions.addNotification({
           type: 'error',
           message: 'Registration failed. Please try again.',
@@ -433,8 +433,8 @@ export const AppProvider = ({ children }) => {
     initiateGoogleAuth: async () => {
       try {
         await api.auth.initiateGoogleAuth();
-      } catch (error) {
-        console.error('Google OAuth initialization failed:', error);
+      } catch {
+        console.error('Google OAuth initialization failed:');
         actions.addNotification({
           type: 'error',
           message: 'Google authentication is not available.',
@@ -446,8 +446,8 @@ export const AppProvider = ({ children }) => {
     initiateGitHubAuth: async () => {
       try {
         await api.auth.initiateGitHubAuth();
-      } catch (error) {
-        console.error('GitHub OAuth initialization failed:', error);
+      } catch {
+        console.error('GitHub OAuth initialization failed:');
         actions.addNotification({
           type: 'error',
           message: 'GitHub authentication is not available.',
@@ -634,10 +634,12 @@ export const AppProvider = ({ children }) => {
           console.log('🔄 User session mismatch detected, forcing logout');
           actions.logout();
         }
-      } catch (error) {
+      } catch {
         // If validation fails, user might need to re-authenticate
-        console.log('⚠️ User session validation failed:', error.message);
-        if (error.message?.includes('401') || error.message?.includes('authorization')) {
+        console.log('⚠️ User session validation failed');
+        // Attempt graceful logout on known auth failures
+        const lastAuthError = (localStorage.getItem('lastAuthError') || '').toLowerCase();
+        if (lastAuthError.includes('401') || lastAuthError.includes('authorization')) {
           actions.logout();
         }
       }
